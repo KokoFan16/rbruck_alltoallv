@@ -4,7 +4,7 @@
  *      Author: kokofan
  */
 
-#include "radix_r_bruck.h"
+#include "rbruckv.h"
 
 int myPow(int x, unsigned int p) {
   if (p == 0) return 1;
