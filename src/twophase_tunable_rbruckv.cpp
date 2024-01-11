@@ -51,14 +51,14 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 	memcpy(&recvbuf[rdispls[rank]*typesize], &sendbuf[sdispls[rank]*typesize], recvcounts[rank]*typesize);
 
 	int sent_blocks[nlpow];
-	int di = 0, ci = 0, comm_steps = (r - 1)*w - d;
+	int di = 0;
 	int spoint = 1, distance = myPow(r, w-1), next_distance = distance*r;
 	for (int x = w-1; x > -1; x--) {
 		int ze = (x == w - 1)? r - d: r;
 		for (int z = ze-1; z > 0; z--) {
 
 			// 1) get the sent data-blocks
-			di = 0; ci = 0;
+			di = 0;
 			spoint = z * distance;
 			for (int i = spoint; i < nprocs; i += next_distance) {
 				for (int j = i; j < (i+distance); j++) {
