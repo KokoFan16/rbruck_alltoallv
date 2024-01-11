@@ -5,7 +5,7 @@
  *      Author: kokofan
  */
 
-#include "radix_r_bruck.h"
+#include "rbruckv.h"
 
 void uniform_isplit_r_bruck(int n, int r, char *sendbuf, int sendcount, MPI_Datatype sendtype, char *recvbuf, int recvcount, MPI_Datatype recvtype,  MPI_Comm comm) {
 
@@ -237,7 +237,7 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
 	}
 
 	double et = MPI_Wtime();
-	intra_time = et - st;
+//	intra_time = et - st;
 
 	st = MPI_Wtime();
     unit_size = n * sendcount * typesize;
@@ -281,7 +281,7 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
 		next_distance /= r2;
     }
     et = MPI_Wtime();
-    inter_time = et - st;
+//    inter_time = et - st;
 
 	free(temp_buffer);
 }
