@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
 project (RBURKV)
 set (CMAKE_CXX_STANDARD 11)

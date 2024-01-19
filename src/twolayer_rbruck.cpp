@@ -7,13 +7,15 @@
 
 #include "rbruckv.h"
 
-void uniform_isplit_r_bruck(int n, int r, char *sendbuf, int sendcount, MPI_Datatype sendtype, char *recvbuf, int recvcount, MPI_Datatype recvtype,  MPI_Comm comm) {
+int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_Datatype sendtype, char *recvbuf, int recvcount, MPI_Datatype recvtype,  MPI_Comm comm) {
+
+	if ( r < 2 ) { return -1; }
 
 	int rank, nprocs;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &nprocs);
 
-	if (nprocs % n > 0 || n >= nprocs) {
+	if (nprocs % n < 0 || n >= nprocs) {
 		if	(rank == 0)
 			std::cout << "ERROR: the process count should be divided by the process count of a group." << std::endl;
 		 MPI_Abort(comm, -1);
@@ -26,19 +28,22 @@ void uniform_isplit_r_bruck(int n, int r, char *sendbuf, int sendcount, MPI_Data
 
 	int ngroup = nprocs / n; // number of groups
 
+    if (r > n) { r = n; }
+
 	int sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
-	int gw = ceil(log(ngroup) / log(r)); // required digits for inter-Bruck
-	int glpow = pow(r, gw-1); // the largest power of r that smaller than ngroup
+	int sd = (pow(r, sw) - n) / pow(r, sw-1);
 
 	int grank = rank % n; // rank of each process in a group
 	int gid = rank / n; // group id
 
-	int max1 = glpow * n, max2 = pow(r, sw-1)*ngroup;
-	int max_sd = (max1 > max2)? max1: max2; // max send data block count
+	int max2 = pow(r, sw-1) * ngroup;
+	int max_sd = (ngroup > max2)? ngroup: max2; // max send data block count
 
 	char* temp_buffer = (char*)malloc(max_sd * unit_size); // temporary buffer
 
 	// Initial rotation phase for intra-Bruck
+//	double st = MPI_Wtime();
+
 	for (int i = 0; i < ngroup; i++) {
 		int gsp = i*n;
 		for (int j = 0; j < n; j++) {
@@ -57,12 +62,13 @@ void uniform_isplit_r_bruck(int n, int r, char *sendbuf, int sendcount, MPI_Data
 	int di = 0, ci = 0;
 
 	// Intra-Bruck
-	int spoint = 1, distance = 1, next_distance = r;
-	for (int x = 0; x < sw; x++) {
-		for (int z = 1; z < r; z++) {
+	int spoint = 1, distance = myPow(r, sw-1), next_distance = distance*r;
+	for (int x = sw-1; x > -1; x--) {
+		int ze = r - 1;
+		if (x == sw - 1) ze = r - 1 - sd;
+		for (int z = ze; z > 0; z--) {
 			di = 0; ci = 0;
 			spoint = z * distance;
-			if (spoint > n - 1) {break;}
 
 			// get the sent data-blocks
 			for (int g = 0; g < ngroup; g++) {
@@ -89,51 +95,38 @@ void uniform_isplit_r_bruck(int n, int r, char *sendbuf, int sendcount, MPI_Data
 				memcpy(sendbuf+offset, recvbuf+(i*unit_size), unit_size);
 			}
 		}
-		distance *= r;
-		next_distance *= r;
+		distance /= r;
+		next_distance /= r;
 	}
+
+//	double et = MPI_Wtime();
 
     unit_size = n * sendcount * typesize;
-	// Initial rotation phase for inter-Bruck
-	for (int i = 0; i < ngroup; i++) {
-		int index = (2 * gid - i + ngroup) % ngroup;
-		memcpy(&recvbuf[index*unit_size], &sendbuf[i*unit_size], unit_size);
+
+	MPI_Request* req = (MPI_Request*)malloc(2*ngroup*sizeof(MPI_Request));
+	MPI_Status* stat = (MPI_Status*)malloc(2*ngroup*sizeof(MPI_Status));
+	for (int i = 1; i <= ngroup; i++) {
+
+		int nsrc = (gid + i) % ngroup;
+		int src =  nsrc * n + grank; // avoid always to reach first master node
+
+		MPI_Irecv(&recvbuf[nsrc*unit_size], unit_size, MPI_CHAR, src, 0, comm, &req[i-1]);
 	}
 
-	// Inter-Bruck
-	spoint = 1, distance = 1, next_distance = r;
-    for (int x = 0; x < gw; x++) {
-    	for (int z = 1; z < r; z++) {
-    		spoint = z * distance;
-			if (spoint > ngroup - 1) {break;}
+	for (int i = 1; i <= ngroup; i++) {
+		int ndst = (gid - i + ngroup) % ngroup;
+		int dst = ndst * n + grank;
 
-			// get the sent data-blocks
-			di = 0; ci = 0;
-			for (int i = spoint; i < ngroup; i += next_distance) {
-				for (int j = i; j < (i+distance); j++) {
-					if (j > ngroup - 1 ) { break; }
-					int id = (j + gid) % ngroup;
-					sent_blocks[di++] = id;
-					memcpy(&temp_buffer[unit_size*ci++], &recvbuf[id*unit_size], unit_size);
-				}
-			}
+		MPI_Isend(&sendbuf[ndst*unit_size], unit_size, MPI_CHAR, dst, 0, comm, &req[(i-1)+ngroup]);
+	}
 
-    		int recv_proc = (gid*n + (grank + spoint*n)) % nprocs; // receive data from rank - 2^step process
-    		int send_proc = (gid*n + (grank - spoint*n + nprocs)) % nprocs; // send data from rank + 2^k process
+	MPI_Waitall(2*ngroup, req, stat);
 
-    		long long comm_size = di * unit_size;
-    		MPI_Sendrecv(temp_buffer, comm_size, MPI_CHAR, send_proc, 0, sendbuf, comm_size, MPI_CHAR, recv_proc, 0, comm, MPI_STATUS_IGNORE);
-
-    		for (int i = 0; i < di; i++) {
-    			long long offset = sent_blocks[i] * unit_size;
-    			memcpy(recvbuf+offset, sendbuf+(i*unit_size), unit_size);
-    		}
-    	}
-		distance *= r;
-		next_distance *= r;
-    }
-
+	free(req);
+	free(stat);
 	free(temp_buffer);
+
+	return 0;
 }
 
 
@@ -143,9 +136,7 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &nprocs);
 
-    if (r1 < 2 || r2 < 2) { r1 = 2; }
-
-//    std::cout << nprocs << ", " << n << std::endl;
+    if (r1 < 2 ) { r1 = 2; }
 
 	if (nprocs % n > 0 || n >= nprocs) {
 		if	(rank == 0)
@@ -159,6 +150,8 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
     int unit_size = sendcount * typesize;
 
 	int ngroup = nprocs / n; // number of groups
+
+    r2 = ngroup;
 
     if (r1 > n) { r1 = n; }
     if (r2 > ngroup) { r2 = ngroup; }
@@ -179,7 +172,6 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
 	char* temp_buffer = (char*)malloc(max_sd * unit_size); // temporary buffer
 
 	// Initial rotation phase for intra-Bruck
-	double st = MPI_Wtime();
 
 	for (int i = 0; i < ngroup; i++) {
 		int gsp = i*n;
@@ -236,10 +228,6 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
 		next_distance /= r1;
 	}
 
-	double et = MPI_Wtime();
-//	intra_time = et - st;
-
-	st = MPI_Wtime();
     unit_size = n * sendcount * typesize;
 	// Initial rotation phase for inter-Bruck
 	for (int i = 0; i < ngroup; i++) {
@@ -280,8 +268,6 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
 		distance /= r2;
 		next_distance /= r2;
     }
-    et = MPI_Wtime();
-//    inter_time = et - st;
 
 	free(temp_buffer);
 }
