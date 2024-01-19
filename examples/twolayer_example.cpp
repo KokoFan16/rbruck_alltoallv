@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 static void run_twolayer(int loopcount, int ncores, int nprocs, std::vector<int> bases, int warmup) {
 
 	int basecount = bases.size();
-	for (int n = 2; n <= 2; n = n * 2) {
+	for (int n = 2; n <= 1024; n = n * 2) {
 
 
 		long long* send_buffer = new long long[n*nprocs];
