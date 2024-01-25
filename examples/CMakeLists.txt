@@ -5,6 +5,8 @@ SET_SOURCE_FILES_PROPERTIES(${CFILES} PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-st
 
 add_executable(rbruckv ./rbruckv_example.cpp)
 add_executable(twolayer ./twolayer_example.cpp)
+add_executable(combAlltoallv ./twophaseLayer_example.cpp)
 
 target_link_libraries(rbruckv rbruckvLib)
 target_link_libraries(twolayer rbruckvLib)
+target_link_libraries(combAlltoallv rbruckvLib)
