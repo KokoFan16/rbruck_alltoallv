@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.5)
 
 file(GLOB_RECURSE CFILES "${PROJECT_SOURCE_DIR}/examples/*.cpp")
 SET_SOURCE_FILES_PROPERTIES(${CFILES} PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-std=c++11")
@@ -6,7 +6,9 @@ SET_SOURCE_FILES_PROPERTIES(${CFILES} PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-st
 add_executable(rbruckv ./rbruckv_example.cpp)
 add_executable(twolayer ./twolayer_example.cpp)
 add_executable(combAlltoallv ./twophaseLayer_example.cpp)
+add_executable(MLinputs ./MLinputs_example.cpp)
 
 target_link_libraries(rbruckv rbruckvLib)
 target_link_libraries(twolayer rbruckvLib)
 target_link_libraries(combAlltoallv rbruckvLib)
+target_link_libraries(MLinputs rbruckvLib)

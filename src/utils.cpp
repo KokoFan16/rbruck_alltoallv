@@ -29,4 +29,3 @@ std::vector<int> convert10tob(int w, int N, int b) {
 }
 
 
-
