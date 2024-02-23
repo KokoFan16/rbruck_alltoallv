@@ -18,8 +18,6 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 	MPI_Comm_rank(comm, &rank);
 	MPI_Comm_size(comm, &nprocs);
 
-	char *psnd, *prcv;
-
 	if (r > n) { r = n; }
 
 	int typesize;
@@ -167,16 +165,14 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 		int nsrc = (gid + i) % ngroup;
 		int src =  nsrc * n + grank; // avoid always to reach first master node
 
-		prcv = (char *) recvbuf + nrdisp[nsrc];
-		MPI_Irecv(prcv, nrecv[nsrc]*typesize, MPI_CHAR, src, 0, comm, &req[i]);
+		MPI_Irecv(&recvbuf[nrdisp[nsrc]], nrecv[nsrc]*typesize, MPI_CHAR, src, 0, comm, &req[i]);
 	}
 
 	for (int i = 0; i < ngroup; i++) {
 		int ndst = (gid - i + ngroup) % ngroup;
 		int dst = ndst * n + grank;
 
-		psnd = (char *) temp_send_buffer + nsdisp[ndst];
-		MPI_Isend(psnd, nsend[ndst]*typesize, MPI_CHAR, dst, 0, comm, &req[i+ngroup]);
+		MPI_Isend(&temp_send_buffer[nsdisp[ndst]], nsend[ndst]*typesize, MPI_CHAR, dst, 0, comm, &req[i+ngroup]);
 	}
 
 	MPI_Waitall(2*ngroup, req, stat);
