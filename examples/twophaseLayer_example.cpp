@@ -103,8 +103,8 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 				// check correctness
 				int error = 0;
-				for (int i=0; i < roffset; i++) {
-					if ( (recv_buffer[i] % 10) != (rank % 10) ) { error++; }
+				for (int s = 0; s < roffset; s++) {
+					if ( (recv_buffer[s] % 10) != (rank % 10) ) { error++; }
 				}
 				if (rank == 0 && error > 0) {
 					std::cout << "[combineAtav] base " << bases[i] << " has errors" << std::endl;
