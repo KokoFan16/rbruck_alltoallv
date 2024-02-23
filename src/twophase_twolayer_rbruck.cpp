@@ -7,7 +7,10 @@
 
 #include "rbruckv.h"
 
-int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm){
+int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
+									   int *sdispls, MPI_Datatype sendtype, char *recvbuf,
+									   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
+{
 
 	if ( r < 2 ) { return -1; }
 
