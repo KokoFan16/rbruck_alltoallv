@@ -11,7 +11,7 @@ int ompi_alltoallv_intra_pairwise(char *sendbuf, int *sendcounts, int *sdispls,
 									  MPI_Datatype sendtype, char *recvbuf, int *recvcounts,
 									  int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
 {
-    int line = -1, err = 0, rank, size, step = 0, sendto, recvfrom;
+    int err = 0, rank, size, step = 0, sendto, recvfrom;
     int sdtype_size, rdtype_size;
     void *psnd, *prcv;
     MPI_Request req;

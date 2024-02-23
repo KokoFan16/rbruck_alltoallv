@@ -43,4 +43,8 @@ int ompi_alltoallv_intra_pairwise(char *sendbuf, int *sendcounts, int *sdispls,
 									  MPI_Datatype sendtype, char *recvbuf, int *recvcounts,
 									  int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
+int exclisive_or_alltoallv(char *sendbuf, int *sendcounts,
+					       int *sdispls, MPI_Datatype sendtype, char *recvbuf,
+						   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+
 #endif /* SRC_RBRUCKV_H_ */
