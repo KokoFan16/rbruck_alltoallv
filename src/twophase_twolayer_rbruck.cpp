@@ -35,13 +35,13 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 
 	w = ceil(log(nprocs) / log(r)); // calculate the number of digits when using r-representation
 	nlpow = pow(r, w-1); // maximum send number of elements
-	d = (pow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
+//	d = (pow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
 
 	ngroup = nprocs / n; // number of groups
     if (r > n) { r = n; }
 
 	sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
-	sd = (pow(r, sw) - n) / pow(r, sw-1);
+//	sd = (pow(r, sw) - n) / pow(r, sw-1);
 
 	grank = rank % n; // rank of each process in a group
 	gid = rank / n; // group id
