@@ -27,13 +27,12 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 	int typesize;
 	MPI_Type_size(sendtype, &typesize);
 
-	int w, ngroup, sw;
+	int ngroup, sw;
 	int grank, gid, imax, max_sd;
 	int local_max_count = 0, max_send_count = 0, id = 0;
 	int updated_sentcouts[nprocs], rotate_index_array[nprocs], pos_status[nprocs];
 	char *temp_send_buffer, *extra_buffer, *temp_recv_buffer;
 
-	w = ceil(log(nprocs) / log(r)); // calculate the number of digits when using r-representation
 	ngroup = nprocs / n; // number of groups
     if (r > n) { r = n; }
 
