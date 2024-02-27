@@ -10,6 +10,10 @@
 
 #include "../rbrucks.h"
 
+extern double init_time, findMax_time, rotateIndex_time, alcCopy_time,
+getBlock_time, prepData_time, excgMeta_time, excgData_time, replace_time,
+orgData_time, prepSP_time, SP_time;
+
 int myPow(int x, unsigned int p);
 std::vector<int> convert10tob(int w, int N, int b);
 
