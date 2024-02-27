@@ -143,31 +143,34 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 //		MPI_Barrier(MPI_COMM_WORLD);
 
 
+//
+//		// twolayer_communicator_linear
+//		for (int it = 0; it < loopcount; it++) {
+//			double st = MPI_Wtime();
+//			twolayer_communicator_linear(ncores, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//			double et = MPI_Wtime();
+//			double total_time = et - st;
+//
+////				// check correctness
+////				int error = 0;
+////				for (int i=0; i < roffset; i++) {
+////					if ( (recv_buffer[i] % 10) != (rank % 10) ) { error++; }
+////				}
+////				if (rank == 0 && error > 0) {
+////					std::cout << "[MPICH_scattered] base " << n << " " << b << " has errors" << std::endl;
+////					MPI_Abort(MPI_COMM_WORLD, -1);
+////				}
+//
+//			if (warmup == 0) {
+//				double max_time = 0;
+//				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//				if (total_time == max_time)
+//					std::cout << "[COMM_linear] " << nprocs << " " << ncores << " " << max_time << std::endl;
+//			}
+//		}
 
-		// twolayer_communicator_linear
-		for (int it = 0; it < loopcount; it++) {
-			double st = MPI_Wtime();
-			twolayer_communicator_linear(ncores, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-			double et = MPI_Wtime();
-			double total_time = et - st;
 
-//				// check correctness
-//				int error = 0;
-//				for (int i=0; i < roffset; i++) {
-//					if ( (recv_buffer[i] % 10) != (rank % 10) ) { error++; }
-//				}
-//				if (rank == 0 && error > 0) {
-//					std::cout << "[MPICH_scattered] base " << n << " " << b << " has errors" << std::endl;
-//					MPI_Abort(MPI_COMM_WORLD, -1);
-//				}
 
-			if (warmup == 0) {
-				double max_time = 0;
-				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-				if (total_time == max_time)
-					std::cout << "[COMM_linear] " << nprocs << " " << ncores << " " << max_time << std::endl;
-			}
-		}
 
 
 

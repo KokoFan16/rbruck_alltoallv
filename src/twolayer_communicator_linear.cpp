@@ -51,6 +51,18 @@ int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdi
 
     int ngroup = nprocs / n; // number of groups
 
+
+    for (int i = 0; i < ngroup; i++) {
+    	int nsrc = (color + i) % ngroup;
+    	int ndst = (color - i + ngroup) % ngroup;
+
+    	for (int j = 0; j < n; j++) {
+			int src =  nsrc * n + j;
+			int dst = ndst * n + j;
+	    	std::cout << rank << " " << src << " " << dst << std::endl;
+    	}
+    }
+
 //	int nsend[ngroup], nrecv[ngroup], nsdisp[ngroup], nrdisp[ngroup];
 //	int soffset = 0, roffset = 0;
 //	for (int i = 0; i < ngroup; i++) {
@@ -89,17 +101,17 @@ int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdi
 //	free(stat);
 //
 ////
-	if (rank == 7) {
-		int index = 0;
-		for (int i = 0; i < nprocs; i++) {
-			for (int j = 0; j < recvcounts[i]; j++){
-				long long a;
-				memcpy(&a, &recvbuf[index*recvsize], recvsize);
-				std::cout << a << std::endl;
-				index++;
-			}
-		}
-	}
+//	if (rank == 8) {
+//		int index = 0;
+//		for (int i = 0; i < nprocs; i++) {
+//			for (int j = 0; j < recvcounts[i]; j++){
+//				long long a;
+//				memcpy(&a, &recvbuf[index*recvsize], recvsize);
+//				std::cout << a << std::endl;
+//				index++;
+//			}
+//		}
+//	}
 
 
 //	MPI_Request* req = (MPI_Request*)malloc(2*nprocs*sizeof(MPI_Request));

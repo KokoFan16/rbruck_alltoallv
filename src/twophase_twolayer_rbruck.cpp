@@ -23,37 +23,40 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 	int typesize;
 	MPI_Type_size(sendtype, &typesize);
 
-	int w = ceil(log(nprocs) / log(r)); // calculate the number of digits when using r-representation
-	int nlpow = pow(r, w-1); // maximum send number of elements
-	int d = (pow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
 
+	int w, nlpow, d, ngroup, sw, sd;
+	int grank, gid, imax, max_sd;
+	int local_max_count = 0, max_send_count = 0, id = 0;
+	int updated_sentcouts[nprocs], rotate_index_array[nprocs], pos_status[nprocs];
+	char *temp_send_buffer, *extra_buffer, *temp_recv_buffer;
 
-	int ngroup = nprocs / n; // number of groups
+	w = ceil(log(nprocs) / log(r)); // calculate the number of digits when using r-representation
+	nlpow = pow(r, w-1); // maximum send number of elements
+	d = (pow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
+
+	ngroup = nprocs / n; // number of groups
     if (r > n) { r = n; }
 
-	int sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
-	int sd = (pow(r, sw) - n) / pow(r, sw-1);
+	sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
+	sd = (pow(r, sw) - n) / pow(r, sw-1);
 
-	int grank = rank % n; // rank of each process in a group
-	int gid = rank / n; // group id
-	int imax = pow(r, sw-1) * ngroup;
-	int max_sd = (ngroup > imax)? ngroup: imax; // max send data block count
+	grank = rank % n; // rank of each process in a group
+	gid = rank / n; // group id
+	imax = pow(r, sw-1) * ngroup;
+	max_sd = (ngroup > imax)? ngroup: imax; // max send data block count
+
+	int sent_blocks[max_sd];
 
 	// 1. Find max send elements per data-block
-	int local_max_count = 0;
 	for (int i = 0; i < nprocs; i++) {
 		if (sendcounts[i] > local_max_count)
 			local_max_count = sendcounts[i];
 	}
-	int max_send_count = 0;
 	MPI_Allreduce(&local_max_count, &max_send_count, 1, MPI_INT, MPI_MAX, comm);
 
-	int updated_sentcouts[nprocs];
 	memcpy(updated_sentcouts, sendcounts, nprocs*sizeof(int));
 
 	// 2. create local index array after rotation
-	int rotate_index_array[nprocs];
-	int id = 0;
 	for (int i = 0; i < ngroup; i++) {
 		int gsp = i*n;
 		for (int j = 0; j < n; j++) {
@@ -61,21 +64,17 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 		}
 	}
 
-	int pos_status[nprocs];
 	memset(pos_status, 0, nprocs*sizeof(int));
-	int sent_blocks[max_sd];
-	int di = 0;
 
-	char* temp_send_buffer = (char*) malloc(max_send_count*typesize*nprocs);
-	char* extra_buffer = (char*) malloc(max_send_count*typesize*nprocs);
-	char* temp_recv_buffer = (char*) malloc(max_send_count*typesize*nlpow);
+	temp_send_buffer = (char*) malloc(max_send_count*typesize*nprocs);
+	extra_buffer = (char*) malloc(max_send_count*typesize*nprocs);
+	temp_recv_buffer = (char*) malloc(max_send_count*typesize*max_sd);
 
 	// Intra-Bruck
-	int spoint = 1, distance = 1, next_distance = r;
+	int spoint = 1, distance = 1, next_distance = r, di = 0;
 	for (int x = 0; x < sw; x++) {
 		for (int z = 1; z < r; z++) {
-			di = 0;
-			spoint = z * distance;
+			di = 0; spoint = z * distance;
 			if (spoint > n - 1) {break;}
 
 			// get the sent data-blocks
@@ -89,13 +88,15 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 				}
 			}
 
+
 			// 2) prepare metadata and send buffer
 			int metadata_send[di];
 			int sendCount = 0, offset = 0;
 			for (int i = 0; i < di; i++) {
 				int send_index = rotate_index_array[sent_blocks[i]];
 				metadata_send[i] = updated_sentcouts[send_index];
-				if (pos_status[send_index] == 0)
+
+				if (pos_status[send_index] == 0 )
 					memcpy(&temp_send_buffer[offset], &sendbuf[sdispls[send_index]*typesize], updated_sentcouts[send_index]*typesize);
 				else
 					memcpy(&temp_send_buffer[offset], &extra_buffer[sent_blocks[i]*max_send_count*typesize], updated_sentcouts[send_index]*typesize);
@@ -110,6 +111,7 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 			MPI_Sendrecv(metadata_send, di, MPI_INT, send_proc, 0, metadata_recv, di, MPI_INT, recv_proc, 0, comm, MPI_STATUS_IGNORE);
 
 			for(int i = 0; i < di; i++) { sendCount += metadata_recv[i]; }
+
 
 			// 4) exchange data
 			MPI_Sendrecv(temp_send_buffer, offset, MPI_CHAR, send_proc, 1, temp_recv_buffer, sendCount*typesize, MPI_CHAR, recv_proc, 1, comm, MPI_STATUS_IGNORE);
@@ -176,6 +178,18 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 	}
 
 	MPI_Waitall(2*ngroup, req, stat);
+
+	if (rank == 1) {
+		int index = 0;
+		for (int i = 0; i < nprocs; i++) {
+			for (int j = 0; j < recvcounts[i]; j++){
+				long long a;
+				memcpy(&a, &recvbuf[(index)*typesize], typesize);
+				std::cout << a << std::endl;
+				index++;
+			}
+		}
+	}
 
 	free(req);
 	free(stat);
