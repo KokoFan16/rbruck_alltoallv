@@ -60,7 +60,7 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 	}
 	MPI_Allreduce(&local_max_count, &max_send_count, 1, MPI_INT, MPI_MAX, comm);
 	et = MPI_Wtime();
-	double findMax_time = et - st;
+	findMax_time = et - st;
 
 	st = MPI_Wtime();
 	// 2. create local index array after rotation
