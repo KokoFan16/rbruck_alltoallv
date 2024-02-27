@@ -27,21 +27,17 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 	int typesize;
 	MPI_Type_size(sendtype, &typesize);
 
-	int w, nlpow, d, ngroup, sw, sd;
+	int w, ngroup, sw;
 	int grank, gid, imax, max_sd;
 	int local_max_count = 0, max_send_count = 0, id = 0;
 	int updated_sentcouts[nprocs], rotate_index_array[nprocs], pos_status[nprocs];
 	char *temp_send_buffer, *extra_buffer, *temp_recv_buffer;
 
 	w = ceil(log(nprocs) / log(r)); // calculate the number of digits when using r-representation
-	nlpow = pow(r, w-1); // maximum send number of elements
-//	d = (pow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
-
 	ngroup = nprocs / n; // number of groups
     if (r > n) { r = n; }
 
 	sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
-//	sd = (pow(r, sw) - n) / pow(r, sw-1);
 
 	grank = rank % n; // rank of each process in a group
 	gid = rank / n; // group id
