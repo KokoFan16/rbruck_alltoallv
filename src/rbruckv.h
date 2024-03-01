@@ -32,10 +32,6 @@ int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcou
 									   MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
 									   MPI_Datatype recvtype, MPI_Comm comm);
 
-int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdispls,
-								 MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
-								 MPI_Datatype recvtype, MPI_Comm comm);
-
 int MPICH_intra_scattered(int bblock, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 						  char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
@@ -51,8 +47,14 @@ int exclisive_or_alltoallv(char *sendbuf, int *sendcounts,
 					       int *sdispls, MPI_Datatype sendtype, char *recvbuf,
 						   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
+int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdispls,
+								 MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
+								 MPI_Datatype recvtype, MPI_Comm comm);
 
 int twolayer_communicator_linear_s2(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
+		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+
+int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 #endif /* SRC_RBRUCKV_H_ */

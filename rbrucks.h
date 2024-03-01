@@ -15,5 +15,6 @@
 #include <cstring>
 #include <algorithm>
 #include <string>
+#include <cmath>
 
 #endif /* RBRUCKS_H_ */

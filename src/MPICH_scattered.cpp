@@ -42,6 +42,7 @@ int MPICH_intra_scattered(int bblock, char *sendbuf, int *sendcounts, int *sdisp
 		/* do the communication -- post ss sends and receives: */
 		for (i = 0; i < ss; i++) {
 			dst = (rank + i + ii) % comm_size;
+
 			if (recvcounts[dst]) {
 				mpi_errno = MPI_Irecv((char *) recvbuf + rdispls[dst] * recv_extent,
 									   recvcounts[dst], recvtype, dst,
