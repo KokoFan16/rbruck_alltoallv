@@ -7,12 +7,12 @@
 
 #include "rbruckv.h"
 
-double init_time = 0, findMax_time = 0, rotateIndex_time = 0, alcCopy_time = 0,
-getBlock_time = 0,prepData_time = 0, excgMeta_time = 0, excgData_time = 0, replace_time = 0;
+//double init_time = 0, findMax_time = 0, rotateIndex_time = 0, alcCopy_time = 0,
+//getBlock_time = 0, prepData_time = 0, excgMeta_time = 0, excgData_time = 0, replace_time = 0;
 
 int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm){
 
-	double st = MPI_Wtime();
+//	double st = MPI_Wtime();
 	if ( r < 2 ) { return -1; }
 
 	int rank, nprocs, typesize;
@@ -30,10 +30,10 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 	w = ceil(log(nprocs) / log(r)); // calculate the number of digits when using r-representation
 	nlpow = pow(r, w-1); // maximum send number of elements
 	d = (pow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
-	double et = MPI_Wtime();
-	init_time = et - st;
+//	double et = MPI_Wtime();
+//	init_time = et - st;
 
-	st = MPI_Wtime();
+//	st = MPI_Wtime();
 	// 1. Find max send count
 	for (int i = 0; i < nprocs; i++) {
 		if (sendcounts[i] > local_max_count)
@@ -41,18 +41,18 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 	}
 	MPI_Allreduce(&local_max_count, &max_send_count, 1, MPI_INT, MPI_MAX, comm);
 	memcpy(sendNcopy, sendcounts, nprocs*sizeof(int));
-	et = MPI_Wtime();
-	findMax_time = et - st;
+//	et = MPI_Wtime();
+//	findMax_time = et - st;
 
 
-	st = MPI_Wtime();
+//	st = MPI_Wtime();
     // 2. create local index array after rotation
 	for (int i = 0; i < nprocs; i++)
 		rotate_index_array[i] = (2*rank-i+nprocs)%nprocs;
-	et = MPI_Wtime();
-	rotateIndex_time = et - st;
+//	et = MPI_Wtime();
+//	rotateIndex_time = et - st;
 
-	st = MPI_Wtime();
+//	st = MPI_Wtime();
 	// 3. exchange data with log(P) steps
 	char* extra_buffer = (char*) malloc(max_send_count*typesize*nprocs);
 	char* temp_send_buffer = (char*) malloc(max_send_count*typesize*nlpow);
@@ -62,15 +62,14 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 
 	int sent_blocks[nlpow];
 	int di = 0, spoint = 1, distance = myPow(r, w-1), next_distance = distance*r;
-	et = MPI_Wtime();
-	alcCopy_time = et - st;
-
+//	et = MPI_Wtime();
+//	alcCopy_time = et - st;
 
 	for (int x = w-1; x > -1; x--) {
 		int ze = (x == w - 1)? r - d: r;
 		for (int z = ze-1; z > 0; z--) {
 
-			st = MPI_Wtime();
+//			st = MPI_Wtime();
 			// 1) get the sent data-blocks
 			di = 0;
 			spoint = z * distance;
@@ -81,10 +80,10 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 					sent_blocks[di++] = id;
 				}
 			}
-			et = MPI_Wtime();
-			getBlock_time += et - st;
+//			et = MPI_Wtime();
+//			getBlock_time += et - st;
 
-			st = MPI_Wtime();
+//			st = MPI_Wtime();
 			// 2) prepare metadata and send buffer
 			int metadata_send[di];
 			int sendCount = 0, offset = 0;
@@ -97,30 +96,30 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 					memcpy(&temp_send_buffer[offset], &extra_buffer[sent_blocks[i]*max_send_count*typesize], sendNcopy[send_index]*typesize);
 				offset += sendNcopy[send_index]*typesize;
 			}
-			et = MPI_Wtime();
-			prepData_time += et - st;
+//			et = MPI_Wtime();
+//			prepData_time += et - st;
 
-			st = MPI_Wtime();
+//			st = MPI_Wtime();
 			// 3) exchange metadata
 			int recvrank = (rank + spoint) % nprocs; // receive data from rank - 2^step process
 			int sendrank = (rank - spoint + nprocs) % nprocs; // send data from rank + 2^k process
 
 			int metadata_recv[di];
 			MPI_Sendrecv(metadata_send, di, MPI_INT, sendrank, 0, metadata_recv, di, MPI_INT, recvrank, 0, comm, MPI_STATUS_IGNORE);
-			et = MPI_Wtime();
-			excgMeta_time += et - st;
+//			et = MPI_Wtime();
+//			excgMeta_time += et - st;
 
-			st = MPI_Wtime();
+//			st = MPI_Wtime();
 			for(int i = 0; i < di; i++)
 				sendCount += metadata_recv[i];
 
 			// 4) exchange data
 			MPI_Sendrecv(temp_send_buffer, offset, MPI_CHAR, sendrank, 1, temp_recv_buffer, sendCount*typesize, MPI_CHAR, recvrank, 1, comm, MPI_STATUS_IGNORE);
-			et = MPI_Wtime();
-			excgData_time += et - st;
+//			et = MPI_Wtime();
+//			excgData_time += et - st;
 
 
-			st = MPI_Wtime();
+//			st = MPI_Wtime();
 			// 5) replaces
 			offset = 0;
 			for (int i = 0; i < di; i++) {
@@ -136,8 +135,8 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 				pos_status[send_index] = 1;
 				sendNcopy[send_index] = metadata_recv[i];
 			}
-			et = MPI_Wtime();
-			replace_time += et - st;
+//			et = MPI_Wtime();
+//			replace_time += et - st;
 		}
 		distance /= r;
 		next_distance /= r;

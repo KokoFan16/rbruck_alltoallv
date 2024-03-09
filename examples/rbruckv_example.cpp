@@ -118,13 +118,15 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 
 					if (total_time == max_time) {
-						double ttime = init_time + findMax_time + rotateIndex_time + alcCopy_time + getBlock_time
-								+ prepData_time + excgMeta_time + excgData_time + replace_time;
 
-						std::cout << "[Rbruckv] " << nprocs << ", " << n << ", " << bases[i] << ", " << ttime <<
-						" [" << init_time << ", " << findMax_time << ", " << rotateIndex_time << ", " <<
-						alcCopy_time << ", " << getBlock_time << ", " << prepData_time << ", " << excgMeta_time
-						<< ", " << excgData_time << ", " << replace_time << "] " << std::endl;
+						std::cout << "[Rbruckv] " << nprocs << ", " << n << ", " << bases[i] << ", " << max_time << std::endl;
+//						double ttime = init_time + findMax_time + rotateIndex_time + alcCopy_time + getBlock_time
+//								+ prepData_time + excgMeta_time + excgData_time + replace_time;
+//
+//						std::cout << "[Rbruckv] " << nprocs << ", " << n << ", " << bases[i] << ", " << ttime <<
+//						" [" << init_time << ", " << findMax_time << ", " << rotateIndex_time << ", " <<
+//						alcCopy_time << ", " << getBlock_time << ", " << prepData_time << ", " << excgMeta_time
+//						<< ", " << excgData_time << ", " << replace_time << "] " << std::endl;
 					}
 				}
 			}
