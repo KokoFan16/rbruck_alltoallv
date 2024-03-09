@@ -248,3 +248,82 @@ int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *
 }
 
 
+//int twolayer_communicator_linear_s4(int block, int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
+//
+//	int rank, nprocs, sendsize, recvsize;
+//	int ngroup, gid, grank, intrap;
+//    char *recvaddr, *sendaddr;
+//    int *intra_sendcounts, *intra_sdispls, *intra_recvcounts, *intra_rdispls;
+//    int src, dst, rp, sp, nquest=0;
+//
+//    MPI_Comm_rank(comm, &rank);
+//    MPI_Comm_size(comm, &nprocs);
+//
+//    std::cout << rank << " / "<< nprocs << std::endl;
+//
+//	if (nprocs % n < 0 || n >= nprocs) {
+//		if	(rank == 0)
+//			std::cout << "ERROR: the process count should be divided by the process count of a group." << std::endl;
+//		 MPI_Abort(comm, -1);
+//	}
+//
+//    MPI_Type_size(sendtype, &sendsize);
+//    MPI_Type_size(recvtype, &recvsize);
+//
+//    ngroup = ceil(nprocs / float(n)); // number of groups
+//    gid = rank / n; // Group identifier
+//    grank = rank % n; // local rank in each group
+//
+//	intrap = n*gid;
+//
+//	/* Intra-node Comm */
+//	MPI_Request* req = (MPI_Request*)malloc(2*nprocs*sizeof(MPI_Request));
+//	MPI_Status* stat = (MPI_Status*)malloc(2*nprocs*sizeof(MPI_Status));
+//
+//	for (int i = 0; i < n; i++) {
+//		src = (grank - i + n) % n;
+//		rp = intrap + src;
+////		if (rp == rank) { continue; }
+//
+////		for (int j = 1; j < 2; j++) {
+////		int j = 1;
+//////			int rdp = (src + j*n) % nprocs;
+//			int rdp = 2;
+//			recvaddr = (char *) recvbuf + rdispls[rdp] * recvsize;
+////
+//////			std::cout << rank << " recv " << rp << " " << rdp << std::endl;
+//			MPI_Irecv(recvaddr, recvcounts[rdp]*recvsize, MPI_CHAR, rp, 1, comm, &req[nquest++]);
+////		}
+//
+//	}
+//
+//	for (int i = 0; i < n; i++) {
+//		dst = (grank + i) % n;
+//		sp = intrap + dst;
+//////		if (sp == rank) { continue; }
+////
+//////		for (int j = 1; j < 2; j++) {
+////		int j = 1;
+//			int sdp = 5;
+//////			int sdp = (dst + j*n) % nprocs;
+//			sendaddr = (char *) sendbuf + sdispls[sdp] * sendsize;
+//			MPI_Isend(sendaddr, sendcounts[sdp]*sendsize, MPI_CHAR, sp, 1, comm, &req[nquest++]);
+//
+////			std::cout << rank << " send " << sp << " " << sdp << std::endl;
+//
+////		}
+//	}
+//
+//	MPI_Waitall(nquest, req, stat);
+//
+//
+//
+//	free(req);
+//	free(stat);
+////	free(temp_sbuff);
+////	free(temp_rbuff);
+//
+//	return 0;
+//}
+
+

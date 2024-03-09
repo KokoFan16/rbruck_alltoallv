@@ -28,4 +28,22 @@ std::vector<int> convert10tob(int w, int N, int b) {
 	return v;
 }
 
+int check_errors(int *recvcounts, long long *recv_buffer, int rank, int nprocs){
+	// check correctness
+	int error = 0, index = 0;
+	for (int p = 0; p < nprocs; p++) {
+		for (int s = 0; s < recvcounts[p]; s++) {
+			if ( p != 0 || rank != 0) {
+				if (recv_buffer[index] == 0) {
+					error++;
+				}
+			}
+			if ( (recv_buffer[index] % 10) != (rank % 10) ) { error++; }
+			index++;
+		}
+	}
+	return error;
+}
+
+
 

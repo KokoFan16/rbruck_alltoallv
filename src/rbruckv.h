@@ -16,6 +16,7 @@ orgData_time, prepSP_time, SP_time;
 
 int myPow(int x, unsigned int p);
 std::vector<int> convert10tob(int w, int N, int b);
+int check_errors(int *recvcounts, long long *recv_buffer, int rank, int nprocs);
 
 int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispls,
 							  MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
@@ -29,6 +30,10 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
 									MPI_Datatype recvtype,  MPI_Comm comm);
 
 int twophase_twolayer_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcounts, int *sdispls,
+									   MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
+									   MPI_Datatype recvtype, MPI_Comm comm);
+
+int twophase_twolayer_rbruck_alltoallv_s2(int n, int r, char *sendbuf, int *sendcounts, int *sdispls,
 									   MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
 									   MPI_Datatype recvtype, MPI_Comm comm);
 
@@ -55,6 +60,9 @@ int twolayer_communicator_linear_s2(int n, char *sendbuf, int *sendcounts, int *
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
+		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+
+int twolayer_communicator_linear_s4(int block, int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 #endif /* SRC_RBRUCKV_H_ */
