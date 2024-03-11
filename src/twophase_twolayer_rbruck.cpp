@@ -28,7 +28,7 @@ int TTPL_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 	int typesize;
 	MPI_Type_size(sendtype, &typesize);
 
-	int ngroup, sw, gw, glpow, gd;
+	int ngroup, sw, gw, glpow;
 	int grank, gid, max1, max2, max_sd;
 	int local_max_count = 0, max_send_count = 0, id = 0;
 	int updated_sentcouts[nprocs], rotate_index_array[nprocs], pos_status[nprocs];

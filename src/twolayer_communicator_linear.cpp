@@ -168,7 +168,6 @@ int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *
 	int rank, nprocs, sendsize, recvsize;
 	int ngroup, gid, grank, intrap;
     char *recvaddr, *sendaddr;
-    int *intra_sendcounts, *intra_sdispls, *intra_recvcounts, *intra_rdispls;
     int src, dst, rp, sp, nquest=0;
 
     MPI_Comm_rank(comm, &rank);

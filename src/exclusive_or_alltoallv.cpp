@@ -13,10 +13,9 @@ int exclisive_or_alltoallv(char *sendbuf, int *sendcounts,
 					       int *sdispls, MPI_Datatype sendtype, char *recvbuf,
 						   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
 {
-    int err = 0, rank, size, src, dst, step;
+    int rank, size, src, dst, step;
     int sdtype_size, rdtype_size;
     void *psnd, *prcv;
-    MPI_Request req;
     MPI_Aint sext, rext;
 
     MPI_Comm_rank(comm, &rank);

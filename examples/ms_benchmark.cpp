@@ -20,7 +20,6 @@ int main(int argc, char **argv) {
     if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != MPI_SUCCESS)
         printf("ERROR: MPI_Comm_rank error\n");
 
-    int loopcount = 1;
 
     for (int n = 128; n <= 131072; n = n * 4) {
 
