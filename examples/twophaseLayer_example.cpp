@@ -333,7 +333,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 				double max_time = 0;
 				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 				if (total_time == max_time)
-					std::cout << "[ExcOr] " << nprocs << " " << ncores << " " << max_time << std::endl;
+					std::cout << "[ExcOr] " << nprocs << " " << n << " " << max_time << std::endl;
 			}
 		}
 
@@ -359,7 +359,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 				double max_time = 0;
 				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 				if (total_time == max_time)
-					std::cout << "[TLLiner] " << nprocs << " " << ncores << " " << max_time << std::endl;
+					std::cout << "[TLLiner] " << nprocs << " " << n << " " << max_time << std::endl;
 			}
 		}
 
@@ -384,7 +384,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 				double max_time = 0;
 				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 				if (total_time == max_time)
-					std::cout << "[TLLiner_S2] " << nprocs << " " << ncores << " " << max_time << std::endl;
+					std::cout << "[TLLiner_S2] " << nprocs << " " << n << " " << max_time << std::endl;
 			}
 		}
 
@@ -409,7 +409,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 				double max_time = 0;
 				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 				if (total_time == max_time)
-					std::cout << "[TLLiner_S3] " << nprocs << " " << ncores << " " << max_time << std::endl;
+					std::cout << "[TLLiner_S3] " << nprocs << " " << n << " " << max_time << std::endl;
 			}
 		}
 
