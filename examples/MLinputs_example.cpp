@@ -98,7 +98,7 @@ int run(int loopcount, int ncores, std::vector<int> bases, int warmup, std::vect
 	for (int i = 0; i < basecount; i++) {
 		for (int it=0; it < loopcount; it++) {
 			double start = MPI_Wtime();
-			twophase_twolayer_rbruck_alltoallv(ncores, bases[i], (char*)sendbuf, sendsarray.data(), sdispls, MPI_CHAR, (char*)recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
+			TTPL_BT_alltoallv(ncores, bases[i], (char*)sendbuf, sendsarray.data(), sdispls, MPI_CHAR, (char*)recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
 			double end = MPI_Wtime();
 			double comm_time = (end - start);
 
