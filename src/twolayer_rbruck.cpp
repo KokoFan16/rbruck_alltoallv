@@ -26,7 +26,7 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 
     int unit_size = sendcount * typesize;
 
-	int ngroup = nprocs / n; // number of groups
+	int ngroup = nprocs / float(n); // number of groups
 
     if (r > n) { r = n; }
 

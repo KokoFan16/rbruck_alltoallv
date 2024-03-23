@@ -88,8 +88,8 @@ static void run_twolayer(int loopcount, int ncores, int nprocs, std::vector<int>
 					for (int d = 0; d < n*nprocs; d++) {
 						if ( (recv_buffer[d] % 10) != (rank % 10) ) error++;
 					}
-					if (rank == 0 && error > 0)
-						std::cout << "[SOR_alltoall] " << bases[i] << " has errors" << std::endl;
+					if (error > 0)
+						std::cout << "[SOR_alltoall] " << rank << " " << bases[i] << " has errors" << std::endl;
 
 
 					if (warmup == 0) {
@@ -122,7 +122,7 @@ static void run_twolayer(int loopcount, int ncores, int nprocs, std::vector<int>
 					for (int d = 0; d < n*nprocs; d++) {
 						if ( (recv_buffer[d] % 10) != (rank % 10) ) error++;
 					}
-					if (rank == 0 && error > 0)
+					if (error > 0)
 						std::cout << "[BR_alltoall] " << bases[i] << " has errors" << std::endl;
 
 
