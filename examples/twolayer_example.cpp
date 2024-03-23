@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     	bases.push_back(atoi(argv[i]));
 
     // warm-up only
-    run_twolayer(5, ncores, nprocs, bases, 1);
+//    run_twolayer(5, ncores, nprocs, bases, 1);
 
     // actual running
     run_twolayer(loopCount, ncores, nprocs, bases, 0);

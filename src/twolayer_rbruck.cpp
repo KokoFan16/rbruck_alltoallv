@@ -30,13 +30,13 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 
     if (r > n) { r = n; }
 
-	int sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
-	int sd = (pow(r, sw) - n) / pow(r, sw-1);
+	int sw = ceil(log(n) / float(log(r))); // required digits for intra-Bruck
+	int sd = (myPow(r, sw) - n) / myPow(r, sw-1);
 
 	int grank = rank % n; // rank of each process in a group
 	int gid = rank / n; // group id
 
-	int max2 = pow(r, sw-1) * ngroup;
+	int max2 = myPow(r, sw-1) * ngroup;
 	int max_sd = (ngroup > max2)? ngroup: max2; // max send data block count
 
 	char* temp_buffer = (char*)malloc(max_sd * unit_size); // temporary buffer
@@ -156,17 +156,17 @@ void uniform_inverse_isplit_r_bruck(int n, int r1, int r2, char *sendbuf, int se
     if (r1 > n) { r1 = n; }
     if (r2 > ngroup) { r2 = ngroup; }
 
-	int sw = ceil(log(n) / log(r1)); // required digits for intra-Bruck
-	int sd = (pow(r1, sw) - n) / pow(r1, sw-1);
+	int sw = ceil(log(n) / float(log(r1))); // required digits for intra-Bruck
+	int sd = (myPow(r1, sw) - n) / myPow(r1, sw-1);
 
-	int gw = ceil(log(ngroup) / log(r2)); // required digits for inter-Bruck
-	int glpow = pow(r2, gw-1); // the largest power of r that smaller than ngroup
-	int gd = (pow(r2, gw) - ngroup) / glpow;
+	int gw = ceil(log(ngroup) / float(log(r2))); // required digits for inter-Bruck
+	int glpow = myPow(r2, gw-1); // the largest power of r that smaller than ngroup
+	int gd = (myPow(r2, gw) - ngroup) / glpow;
 
 	int grank = rank % n; // rank of each process in a group
 	int gid = rank / n; // group id
 
-	int max1 = glpow * n, max2 = pow(r1, sw-1)*ngroup;
+	int max1 = glpow * n, max2 = myPow(r1, sw-1)*ngroup;
 	int max_sd = (max1 > max2)? max1: max2; // max send data block count
 
 	char* temp_buffer = (char*)malloc(max_sd * unit_size); // temporary buffer
