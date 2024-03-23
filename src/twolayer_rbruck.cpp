@@ -40,7 +40,7 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 	int max_sd = (ngroup > max2)? ngroup: max2; // max send data block count
 
 	if (rank == 0) {
-		std::cout << "Math: " << nprocs << " " << ngroup << " " << sw << " " << sd << " " << grank << " " << gid << " " << max2 << " " << max_sd << std::endl;
+		std::cout << "Math: " << nprocs << " " << ngroup << " " << r << " " << sw << " " << sd << " " << grank << " " << gid << " " << max2 << " " << max_sd << std::endl;
 	}
 
 	char* temp_buffer = (char*)malloc(max_sd * unit_size); // temporary buffer
