@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     	bases.push_back(atoi(argv[i]));
 
 //     warm-up only
-    run_rbruckv(5, ncores, nprocs, bases, 1);
+//    run_rbruckv(5, ncores, nprocs, bases, 1);
 
     // actual running
     run_rbruckv(loopCount, ncores, nprocs, bases, 0);
@@ -47,7 +47,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 	int mpi_errno = MPI_SUCCESS;
 	int basecount = bases.size();
 
-	for (int n = 2; n <= 16384; n = n * 2) {
+	for (int n = 2; n <= 8192; n = n * 2) {
 
 		int sendcounts[nprocs], sdispls[nprocs], recvcounts[nprocs], rdispls[nprocs];
 		memset(sendcounts, 0, nprocs*sizeof(int));

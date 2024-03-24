@@ -22,9 +22,9 @@ int exclisive_or_alltoallv(char *sendbuf, int *sendcounts,
     MPI_Comm_size(comm, &size);
 
     /* Check if P is power of 2 */
-    int w = ceil(log(size) / log(2));
+    int w = ceil(log(size) / float(log(2)));
 
-    if (size != pow(2, w)) { return -1; }
+    if (size != myPow(2, w)) { return -1; }
 
     /* Get extent of send and recv types */
     MPI_Type_size(sendtype, &sdtype_size);

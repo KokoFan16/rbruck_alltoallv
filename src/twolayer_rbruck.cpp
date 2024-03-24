@@ -36,14 +36,14 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 	int grank = rank % n; // rank of each process in a group
 	int gid = rank / n; // group id
 
-	int max2 = myPow(r, sw-1) * ngroup;
-	int max_sd = (ngroup > max2)? ngroup: max2; // max send data block count
+	int max = myPow(r, sw-1) * ngroup;
+//	int max_sd = (ngroup > max2)? ngroup: max2; // max send data block count
 
 	if (rank == 0) {
-		std::cout << "Math: " << nprocs << " " << ngroup << " " << r << " " << sw << " " << sd << " " << grank << " " << gid << " " << max2 << " " << max_sd << std::endl;
+		std::cout << "Math: " << nprocs << " " << ngroup << " " << r << " " << sw << " " << sd << " " << grank << " " << gid << " " << max << std::endl;
 	}
 
-	char* temp_buffer = (char*)malloc(max_sd * unit_size); // temporary buffer
+	char* temp_buffer = (char*) malloc(max * unit_size); // temporary buffer
 
 	// Initial rotation phase for intra-Bruck
 //	double st = MPI_Wtime();
@@ -62,7 +62,7 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 		}
 	}
 
-	int sent_blocks[max_sd];
+	int sent_blocks[max];
 	int di = 0, ci = 0;
 
 	// Intra-Bruck
@@ -102,6 +102,15 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 		distance /= r;
 		next_distance /= r;
 	}
+	free(temp_buffer);
+
+	if (rank == 393) {
+		for (int i = 0; i < sendcount*nprocs; i++){
+			long long a;
+			memcpy(&a, &sendbuf[i*typesize], typesize);
+			std::cout << a << std::endl;
+		}
+	}
 
 //	double et = MPI_Wtime();
 
@@ -109,26 +118,26 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 
 	MPI_Request* req = (MPI_Request*)malloc(2*ngroup*sizeof(MPI_Request));
 	MPI_Status* stat = (MPI_Status*)malloc(2*ngroup*sizeof(MPI_Status));
-	for (int i = 1; i <= ngroup; i++) {
+	int nreq = 0;
+	for (int i = 0; i < ngroup; i++) {
 
 		int nsrc = (gid + i) % ngroup;
 		int src =  nsrc * n + grank; // avoid always to reach first master node
 
-		MPI_Irecv(&recvbuf[nsrc*unit_size], unit_size, MPI_CHAR, src, 0, comm, &req[i-1]);
+		MPI_Irecv(&recvbuf[nsrc*unit_size], unit_size, MPI_CHAR, src, 0, comm, &req[nreq++]);
 	}
 
-	for (int i = 1; i <= ngroup; i++) {
+	for (int i = 0; i < ngroup; i++) {
 		int ndst = (gid - i + ngroup) % ngroup;
 		int dst = ndst * n + grank;
 
-		MPI_Isend(&sendbuf[ndst*unit_size], unit_size, MPI_CHAR, dst, 0, comm, &req[(i-1)+ngroup]);
+		MPI_Isend(&sendbuf[ndst*unit_size], unit_size, MPI_CHAR, dst, 0, comm, &req[nreq++]);
 	}
 
-	MPI_Waitall(2*ngroup, req, stat);
+	MPI_Waitall(nreq, req, stat);
 
 	free(req);
 	free(stat);
-	free(temp_buffer);
 
 	return 0;
 }

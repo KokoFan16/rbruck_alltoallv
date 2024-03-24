@@ -256,14 +256,14 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 	int updated_sentcouts[nprocs], rotate_index_array[nprocs], pos_status[nprocs];
 	char *temp_send_buffer, *extra_buffer, *temp_recv_buffer;
 
-	ngroup = nprocs / n; // number of groups
+	ngroup = nprocs / float(n); // number of groups
     if (r > n) { r = n; }
 
-	sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
+	sw = ceil(log(n) / float(log(r))); // required digits for intra-Bruck
 
 	grank = rank % n; // rank of each process in a group
 	gid = rank / n; // group id
-	imax = pow(r, sw-1) * ngroup;
+	imax = myPow(r, sw-1) * ngroup;
 	max_sd = (ngroup > imax)? ngroup: imax; // max send data block count
 
 	int sent_blocks[max_sd];
@@ -470,11 +470,11 @@ int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts,
 	ngroup = ceil(nprocs / float(n));  // number of groups
     if (r > n) { r = n; }
 
-	sw = ceil(log(n) / log(r)); // required digits for intra-Bruck
+	sw = ceil(log(n) / float(log(r))); // required digits for intra-Bruck
 
 	grank = rank % n; // rank of each process in a group
 	gid = rank / n; // group id
-	imax = pow(r, sw-1) * ngroup;
+	imax = myPow(r, sw-1) * ngroup;
 	max_sd = (ngroup > imax)? ngroup: imax; // max send data block count
 
 	int sent_blocks[max_sd];
@@ -597,7 +597,7 @@ int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts,
 	}
 
 	st = MPI_Wtime();
-	int nquest = 2*(ngroup-1)*n;
+	int nquest = 2 * (ngroup-1) * n;
 	MPI_Request* req = (MPI_Request*)malloc(nquest*sizeof(MPI_Request));
 	MPI_Status* stat = (MPI_Status*)malloc(nquest*sizeof(MPI_Status));
 
