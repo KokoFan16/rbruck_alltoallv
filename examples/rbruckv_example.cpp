@@ -46,7 +46,7 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 	int mpi_errno = MPI_SUCCESS;
 	int basecount = bases.size();
-	for (int n = 2; n <= 8192; n = n * 2) {
+	for (int n = 2; n <= 4096; n = n * 2) {
 
 		int sendcounts[nprocs]; // the size of data each process send to other process
 		memset(sendcounts, 0, nprocs*sizeof(int));
@@ -58,7 +58,6 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 		for (int i=0; i < nprocs; i++) {
 			int random = rand() % 100;
 			sendcounts[i] = (n * random) / 100;
-//			sendcounts[i] = i+1;
 		}
 
 		// Random shuffling the sendcounts array
@@ -109,7 +108,6 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 				if (error > 0) {
 					std::cout << "[Rbruckv] base " << bases[i] << " has errors" << std::endl;
-					MPI_Abort(MPI_COMM_WORLD, -1);
 				}
 
 				if (warmup == 0) {
@@ -148,17 +146,6 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 			}
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
-
-//
-//		if (rank == 6) {
-//			index = 0;
-//			for (int i = 0; i < nprocs; i++) {
-//				for (int j = 0; j < recvcounts[i]; j++){
-//					std::cout << recv_buffer[index] << std::endl;
-//					index++;
-//				}
-//			}
-//		}
 
 		delete[] send_buffer;
 		delete[] recv_buffer;

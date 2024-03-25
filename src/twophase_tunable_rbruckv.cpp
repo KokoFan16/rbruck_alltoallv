@@ -31,7 +31,7 @@ int twophase_rbruck_alltoallv(int r, char *sendbuf, int *sendcounts, int *sdispl
 	nlpow = myPow(r, w-1); // maximum send number of elements
 	d = (myPow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
 
-	if (rank == 0) { std::cout << "math: " << nprocs << " " << r << " " << w << " " << nlpow << " " << d << std::endl; }
+//	if (rank == 0) { std::cout << "math: " << nprocs << " " << r << " " << w << " " << nlpow << " " << d << std::endl; }
 //	double et = MPI_Wtime();
 //	init_time = et - st;
 
