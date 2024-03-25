@@ -266,9 +266,9 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 	imax = myPow(r, sw-1) * ngroup;
 	max_sd = (ngroup > imax)? ngroup: imax; // max send data block count
 
-	if (rank == 0) {
-		std::cout << "Math -- TTPL: " << nprocs << " " << r << " " << sw << " " <<  imax << " " << max_sd << std::endl;
-	}
+//	if (rank == 0) {
+//		std::cout << "Math -- TTPL: " << nprocs << " " << r << " " << sw << " " <<  imax << " " << max_sd << std::endl;
+//	}
 
 	int sent_blocks[max_sd];
 	double et = MPI_Wtime();
@@ -481,9 +481,9 @@ int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts,
 	imax = myPow(r, sw-1) * ngroup;
 	max_sd = (ngroup > imax)? ngroup: imax; // max send data block count
 
-	if (rank == 0) {
-		std::cout << "Math -- TTPL-S1: " << nprocs << " " << r << " " << sw << " " <<  imax << " " << max_sd << std::endl;
-	}
+//	if (rank == 0) {
+//		std::cout << "Math -- TTPL-S1: " << nprocs << " " << r << " " << sw << " " <<  imax << " " << max_sd << std::endl;
+//	}
 
 	int sent_blocks[max_sd];
 	double et = MPI_Wtime();

@@ -24,11 +24,9 @@ int exclisive_or_alltoallv(char *sendbuf, int *sendcounts,
     /* Check if P is power of 2 */
     int w = ceil(log(size) / float(log(2)));
 
-    if (rank == 0) {
-		std::cout << "Math -- exclisive-or: " << size << " " << log(size) << " " <<  log(2) << " " << w << " " << myPow(2, w) << std::endl;
-	}
-
-
+//    if (rank == 0) {
+//		std::cout << "Math -- exclisive-or: " << size << " " << log(size) << " " <<  log(2) << " " << w << " " << myPow(2, w) << std::endl;
+//	}
 
     if (size != myPow(2, w)) { return -1; }
 
