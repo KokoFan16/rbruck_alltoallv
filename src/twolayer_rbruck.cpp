@@ -104,14 +104,6 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 	}
 	free(temp_buffer);
 
-	if (rank == 393) {
-		for (int i = 0; i < sendcount*nprocs; i++){
-			long long a;
-			memcpy(&a, &sendbuf[i*typesize], typesize);
-			std::cout << a << std::endl;
-		}
-	}
-
 //	double et = MPI_Wtime();
 
     unit_size = n * sendcount * typesize;
