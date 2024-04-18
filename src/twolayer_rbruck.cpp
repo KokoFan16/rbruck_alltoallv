@@ -39,9 +39,9 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 	int max = myPow(r, sw-1) * ngroup;
 //	int max_sd = (ngroup > max2)? ngroup: max2; // max send data block count
 
-	if (rank == 0) {
-		std::cout << "Math: " << nprocs << " " << ngroup << " " << r << " " << sw << " " << sd << " " << grank << " " << gid << " " << max << std::endl;
-	}
+//	if (rank == 0) {
+//		std::cout << "Math: " << nprocs << " " << ngroup << " " << r << " " << sw << " " << sd << " " << grank << " " << gid << " " << max << std::endl;
+//	}
 
 	char* temp_buffer = (char*) malloc(max * unit_size); // temporary buffer
 
@@ -104,8 +104,6 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 	}
 	free(temp_buffer);
 
-//	double et = MPI_Wtime();
-
     unit_size = n * sendcount * typesize;
 
 	MPI_Request* req = (MPI_Request*)malloc(2*ngroup*sizeof(MPI_Request));
@@ -115,6 +113,7 @@ int uniform_spreadout_twolayer(int n, int r, char *sendbuf, int sendcount, MPI_D
 
 		int nsrc = (gid + i) % ngroup;
 		int src =  nsrc * n + grank; // avoid always to reach first master node
+
 
 		MPI_Irecv(&recvbuf[nsrc*unit_size], unit_size, MPI_CHAR, src, 0, comm, &req[nreq++]);
 	}

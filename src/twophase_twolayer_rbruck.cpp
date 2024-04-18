@@ -280,7 +280,7 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 		if (sendcounts[i] > local_max_count)
 			local_max_count = sendcounts[i];
 	}
-	MPI_Allreduce(&local_max_count, &max_send_count, 1, MPI_INT, MPI_MAX, comm);
+//	MPI_Allreduce(&local_max_count, &max_send_count, 1, MPI_INT, MPI_MAX, comm);
 	et = MPI_Wtime();
 	findMax_time = et - st;
 
@@ -298,9 +298,9 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 	st = MPI_Wtime();
 	memset(pos_status, 0, nprocs*sizeof(int));
 	memcpy(updated_sentcouts, sendcounts, nprocs*sizeof(int));
-	temp_send_buffer = (char*) malloc(max_send_count*typesize*nprocs);
-	extra_buffer = (char*) malloc(max_send_count*typesize*nprocs);
-	temp_recv_buffer = (char*) malloc(max_send_count*typesize*max_sd);
+	temp_send_buffer = (char*) malloc(local_max_count*typesize*nprocs);
+	extra_buffer = (char*) malloc(local_max_count*typesize*nprocs);
+	temp_recv_buffer = (char*) malloc(local_max_count*typesize*max_sd);
 	et = MPI_Wtime();
 	alcCopy_time = et - st;
 
@@ -337,7 +337,7 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 				if (pos_status[send_index] == 0 )
 					memcpy(&temp_send_buffer[offset], &sendbuf[sdispls[send_index]*typesize], updated_sentcouts[send_index]*typesize);
 				else
-					memcpy(&temp_send_buffer[offset], &extra_buffer[sent_blocks[i]*max_send_count*typesize], updated_sentcouts[send_index]*typesize);
+					memcpy(&temp_send_buffer[offset], &extra_buffer[sent_blocks[i]*local_max_count*typesize], updated_sentcouts[send_index]*typesize);
 				offset += updated_sentcouts[send_index]*typesize;
 			}
 
@@ -368,7 +368,7 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 			for (int i = 0; i < di; i++) {
 				int send_index = rotate_index_array[sent_blocks[i]];
 
-				memcpy(&extra_buffer[sent_blocks[i]*max_send_count*typesize], &temp_recv_buffer[offset], metadata_recv[i]*typesize);
+				memcpy(&extra_buffer[sent_blocks[i]*local_max_count*typesize], &temp_recv_buffer[offset], metadata_recv[i]*typesize);
 
 				offset += metadata_recv[i]*typesize;
 				pos_status[send_index] = 1;
@@ -514,7 +514,7 @@ int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts,
 	memset(pos_status, 0, nprocs*sizeof(int));
 	memcpy(updated_sentcouts, sendcounts, nprocs*sizeof(int));
 	temp_send_buffer = (char*) malloc(max_send_count*typesize*nprocs);
-	extra_buffer = (char*) malloc(max_send_count*typesize*nprocs);
+	extra_buffer = (char*) malloc(max_send_count*typesize*max_sd);
 	temp_recv_buffer = (char*) malloc(max_send_count*typesize*max_sd);
 	memcpy(&recvbuf[rdispls[rank]*typesize], &sendbuf[sdispls[rank]*typesize], recvcounts[rank]*typesize);
 	et = MPI_Wtime();

@@ -9,6 +9,8 @@ add_executable(combAlltoallv ./twophaseLayer_example.cpp)
 add_executable(MLinputs ./MLinputs_example.cpp)
 add_executable(mpich_twolayer_alltoall ./mpich_twolayer_alltoall.cpp)
 add_executable(ms_benchmark ./ms_benchmark.cpp)
+add_executable(LTRNA ./twophaseLayer_example2.cpp)
+
 
 
 target_link_libraries(rbruckv rbruckvLib)
@@ -17,3 +19,4 @@ target_link_libraries(combAlltoallv rbruckvLib)
 target_link_libraries(MLinputs rbruckvLib)
 target_link_libraries(mpich_twolayer_alltoall rbruckvLib)
 target_link_libraries(ms_benchmark rbruckvLib)
+target_link_libraries(LTRNA rbruckvLib)
