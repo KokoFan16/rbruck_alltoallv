@@ -111,115 +111,115 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 		MPI_Barrier(MPI_COMM_WORLD);
 
 
-		// MPICH_intra_scattered
-		for (int b = 1; b <= nprocs; b*=2){
-			for (int it = 0; it < loopcount; it++) {
-				double st = MPI_Wtime();
-				mpi_errno = MPICH_intra_scattered(b, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-				double et = MPI_Wtime();
-				double total_time = et - st;
-
-				if (mpi_errno != MPI_SUCCESS)
-					std::cout << "MPICH_intra_scattered fail!" <<std::endl;
-
-				// check correctness
-				int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
-				if (error > 0) {
-					std::cout << "[MPICH_scattered] " << n << " " << b << " has errors" << std::endl;
-					MPI_Abort(MPI_COMM_WORLD, -1);
-				}
-
-				if (warmup == 0) {
-					double max_time = 0;
-					MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-					if (total_time == max_time)
-						std::cout << "[MPICH_scattered] " << nprocs << " " << n << " " << b << " " << max_time << std::endl;
-				}
-			}
-		}
-
-		MPI_Barrier(MPI_COMM_WORLD);
-
-//		 ompi_alltoallv_intra_basic_linear
-		for (int it = 0; it < loopcount; it++) {
-			double st = MPI_Wtime();
-			mpi_errno = ompi_alltoallv_intra_basic_linear((char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-			double et = MPI_Wtime();
-			double total_time = et - st;
-
-			if (mpi_errno != MPI_SUCCESS)
-				std::cout << "ompi_alltoallv_intra_basic_linear fail!" <<std::endl;
-
-			// check correctness
-			int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
-			if (error > 0) {
-				std::cout << "[OMPI_linear] " << n << " has errors" << std::endl;
-				MPI_Abort(MPI_COMM_WORLD, -1);
-			}
-
-			if (warmup == 0) {
-				double max_time = 0;
-				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-				if (total_time == max_time)
-					std::cout << "[OMPI_linear] " << nprocs << " " << n << " "<<  max_time << std::endl;
-			}
-		}
-
-		MPI_Barrier(MPI_COMM_WORLD);
-
-
-//		 ompi_alltoallv_intra_basic_linear
-		for (int it = 0; it < loopcount; it++) {
-			double st = MPI_Wtime();
-			mpi_errno = ompi_alltoallv_intra_pairwise((char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-			double et = MPI_Wtime();
-			double total_time = et - st;
-
-			if (mpi_errno != MPI_SUCCESS)
-				std::cout << "ompi_alltoallv_intra_pairwise fail!" <<std::endl;
-
-			// check correctness
-			int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
-			if (error > 0) {
-				std::cout << "[OMPI_pairwise] " << n << " has errors" << std::endl;
-				MPI_Abort(MPI_COMM_WORLD, -1);
-			}
-
-			if (warmup == 0) {
-				double max_time = 0;
-				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-				if (total_time == max_time)
-					std::cout << "[OMPI_pairwise] " << nprocs << " " << n << " "<<  max_time << std::endl;
-			}
-		}
-
-		MPI_Barrier(MPI_COMM_WORLD);
-
-		// exclisive_or_alltoallv (limit: P is powers of 2)
-		for (int it = 0; it < loopcount; it++) {
-			double st = MPI_Wtime();
-			mpi_errno = exclisive_or_alltoallv((char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-			double et = MPI_Wtime();
-			double total_time = et - st;
-
-			if (mpi_errno != MPI_SUCCESS) { std::cout << "exclisive_or_alltoallv fail!" <<std::endl; }
-
-			// check correctness
-			int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
-			if (error > 0) {
-				std::cout << "[ExcOr] " << n << " has errors" << std::endl;
-				MPI_Abort(MPI_COMM_WORLD, -1);
-			}
-
-			if (warmup == 0) {
-				double max_time = 0;
-				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-				if (total_time == max_time)
-					std::cout << "[ExcOr] " << nprocs << " " << n << " " << max_time << std::endl;
-			}
-		}
-
-		MPI_Barrier(MPI_COMM_WORLD);
+//		// MPICH_intra_scattered
+//		for (int b = 1; b <= nprocs; b*=2){
+//			for (int it = 0; it < loopcount; it++) {
+//				double st = MPI_Wtime();
+//				mpi_errno = MPICH_intra_scattered(b, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//				double et = MPI_Wtime();
+//				double total_time = et - st;
+//
+//				if (mpi_errno != MPI_SUCCESS)
+//					std::cout << "MPICH_intra_scattered fail!" <<std::endl;
+//
+//				// check correctness
+//				int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+//				if (error > 0) {
+//					std::cout << "[MPICH_scattered] " << n << " " << b << " has errors" << std::endl;
+////					MPI_Abort(MPI_COMM_WORLD, -1);
+//				}
+//
+//				if (warmup == 0) {
+//					double max_time = 0;
+//					MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//					if (total_time == max_time)
+//						std::cout << "[MPICH_scattered] " << nprocs << " " << n << " " << b << " " << max_time << std::endl;
+//				}
+//			}
+//		}
+//
+//		MPI_Barrier(MPI_COMM_WORLD);
+//
+////		 ompi_alltoallv_intra_basic_linear
+//		for (int it = 0; it < loopcount; it++) {
+//			double st = MPI_Wtime();
+//			mpi_errno = ompi_alltoallv_intra_basic_linear((char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//			double et = MPI_Wtime();
+//			double total_time = et - st;
+//
+//			if (mpi_errno != MPI_SUCCESS)
+//				std::cout << "ompi_alltoallv_intra_basic_linear fail!" <<std::endl;
+//
+//			// check correctness
+//			int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+//			if (error > 0) {
+//				std::cout << "[OMPI_linear] " << n << " has errors" << std::endl;
+////				MPI_Abort(MPI_COMM_WORLD, -1);
+//			}
+//
+//			if (warmup == 0) {
+//				double max_time = 0;
+//				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//				if (total_time == max_time)
+//					std::cout << "[OMPI_linear] " << nprocs << " " << n << " "<<  max_time << std::endl;
+//			}
+//		}
+//
+//		MPI_Barrier(MPI_COMM_WORLD);
+//
+//
+////		 ompi_alltoallv_intra_basic_linear
+//		for (int it = 0; it < loopcount; it++) {
+//			double st = MPI_Wtime();
+//			mpi_errno = ompi_alltoallv_intra_pairwise((char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//			double et = MPI_Wtime();
+//			double total_time = et - st;
+//
+//			if (mpi_errno != MPI_SUCCESS)
+//				std::cout << "ompi_alltoallv_intra_pairwise fail!" <<std::endl;
+//
+//			// check correctness
+//			int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+//			if (error > 0) {
+//				std::cout << "[OMPI_pairwise] " << n << " has errors" << std::endl;
+////				MPI_Abort(MPI_COMM_WORLD, -1);
+//			}
+//
+//			if (warmup == 0) {
+//				double max_time = 0;
+//				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//				if (total_time == max_time)
+//					std::cout << "[OMPI_pairwise] " << nprocs << " " << n << " "<<  max_time << std::endl;
+//			}
+//		}
+//
+//		MPI_Barrier(MPI_COMM_WORLD);
+//
+//		// exclisive_or_alltoallv (limit: P is powers of 2)
+//		for (int it = 0; it < loopcount; it++) {
+//			double st = MPI_Wtime();
+//			mpi_errno = exclisive_or_alltoallv((char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//			double et = MPI_Wtime();
+//			double total_time = et - st;
+//
+//			if (mpi_errno != MPI_SUCCESS) { std::cout << "exclisive_or_alltoallv fail!" <<std::endl; }
+//
+//			// check correctness
+//			int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+//			if (error > 0) {
+//				std::cout << "[ExcOr] " << n << " has errors" << std::endl;
+////				MPI_Abort(MPI_COMM_WORLD, -1);
+//			}
+//
+//			if (warmup == 0) {
+//				double max_time = 0;
+//				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//				if (total_time == max_time)
+//					std::cout << "[ExcOr] " << nprocs << " " << n << " " << max_time << std::endl;
+//			}
+//		}
+//
+//		MPI_Barrier(MPI_COMM_WORLD);
 
 //		if (rank == 1) {
 //			index = 0;
