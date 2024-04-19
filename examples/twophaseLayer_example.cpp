@@ -49,21 +49,20 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 	for (int n = 2; n <= 4096; n = n * 2) {
 
-		int sendcounts[nprocs]; int sdispls[nprocs]; int recvcounts[nprocs]; int rdispls[nprocs];
+		int sendcounts[nprocs]; // the size of data each process send to other process
 		memset(sendcounts, 0, nprocs*sizeof(int));
-		int soffset = 0, roffset = 0, index = 0;
-		unsigned seed;
+		int sdispls[nprocs];
+		int soffset = 0;
 
 		// Uniform random distribution
 		srand(time(NULL));
 		for (int i=0; i < nprocs; i++) {
-//			sendcounts[i] =  i + 1;
 			int random = rand() % 100;
 			sendcounts[i] = (n * random) / 100;
 		}
 
 		// Random shuffling the sendcounts array
-		seed = std::chrono::system_clock::now().time_since_epoch().count();
+		unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 		std::shuffle(&sendcounts[0], &sendcounts[nprocs], std::default_random_engine(seed));
 
 		// Initial send offset array
@@ -73,12 +72,10 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 		}
 
 		// Initial receive counts and offset array
+		int recvcounts[nprocs];
 		MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
-
-		if (rank == 0) {
-			std::cout << n << " MPI_Alltoall is finished!" << std::endl;
-		}
-
+		int rdispls[nprocs];
+		int roffset = 0;
 		for (int i = 0; i < nprocs; ++i) {
 			rdispls[i] = roffset;
 			roffset += recvcounts[i];
@@ -87,12 +84,14 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 		// Initial send buffer
 		long long* send_buffer = new long long[soffset];
 		long long* recv_buffer = new long long[roffset];
+
+		int index = 0;
 		for (int i = 0; i < nprocs; i++) {
 			for (int j = 0; j < sendcounts[i]; j++)
 				send_buffer[index++] = i + rank * 10;
 		}
 
-//		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Barrier(MPI_COMM_WORLD);
 //
 //		// MPI_alltoallv
 //		for (int it = 0; it < loopcount; it++) {
