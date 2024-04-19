@@ -11,8 +11,6 @@ add_executable(mpich_twolayer_alltoall ./mpich_twolayer_alltoall.cpp)
 add_executable(ms_benchmark ./ms_benchmark.cpp)
 add_executable(LTRNA ./twophaseLayer_example2.cpp)
 
-
-
 target_link_libraries(rbruckv rbruckvLib)
 target_link_libraries(twolayer rbruckvLib)
 target_link_libraries(combAlltoallv rbruckvLib)

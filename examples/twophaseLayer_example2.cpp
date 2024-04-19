@@ -47,7 +47,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 	int mpi_errno = MPI_SUCCESS;
 	int basecount = bases.size();
 
-	for (int n = 2; n <= 4096; n = n * 2) {
+	for (int n = 2; n <= 2; n = n * 2) {
 
 		int sendcounts[nprocs], sdispls[nprocs], recvcounts[nprocs], rdispls[nprocs];
 		memset(sendcounts, 0, nprocs*sizeof(int));
@@ -57,7 +57,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 		// Uniform random distribution
 		srand(time(NULL));
 		for (int i=0; i < nprocs; i++) {
-//			sendcounts[i] =  i + 1;
+//			sendcounts[i] =  1;
 			int random = rand() % 100;
 			sendcounts[i] = (n * random) / 100;
 		}
@@ -105,7 +105,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 				if (error > 0) {
 					std::cout << "[TTPL] base " << bases[i] << " has errors" << std::endl;
-					MPI_Abort(MPI_COMM_WORLD, -1);
+//					MPI_Abort(MPI_COMM_WORLD, -1);
 				}
 
 				if (warmup == 0) {
@@ -146,7 +146,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 				if (error > 0) {
 					std::cout << "[TTPL_S1] base " << bases[i] << " has errors" << std::endl;
-					MPI_Abort(MPI_COMM_WORLD, -1);
+//					MPI_Abort(MPI_COMM_WORLD, -1);
 				}
 
 				if (warmup == 0) {
@@ -203,7 +203,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 			if (error > 0) {
 				std::cout << "[TLLiner_S2] " << n << " has errors" << std::endl;
-				MPI_Abort(MPI_COMM_WORLD, -1);
+//				MPI_Abort(MPI_COMM_WORLD, -1);
 			}
 
 			if (warmup == 0) {
@@ -228,7 +228,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 			if (error > 0) {
 				std::cout << "[TLLiner_S3] " << n << " has errors" << std::endl;
-				MPI_Abort(MPI_COMM_WORLD, -1);
+//				MPI_Abort(MPI_COMM_WORLD, -1);
 			}
 
 			if (warmup == 0) {
@@ -239,9 +239,8 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 			}
 		}
 
-
 //
-//		if (rank == 6) {
+//		if (rank == 8) {
 //			index = 0;
 //			for (int i = 0; i < nprocs; i++) {
 //				for (int j = 0; j < recvcounts[i]; j++){

@@ -221,7 +221,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
-//		if (rank == 6) {
+//		if (rank == 1) {
 //			index = 0;
 //			for (int i = 0; i < nprocs; i++) {
 //				for (int j = 0; j < recvcounts[i]; j++){
