@@ -49,7 +49,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 	for (int n = 2; n <= 4096; n = n * 2) {
 
-		int sendcounts[nprocs], sdispls[nprocs], recvcounts[nprocs], rdispls[nprocs];
+		int sendcounts[nprocs]; int sdispls[nprocs]; int recvcounts[nprocs]; int rdispls[nprocs];
 		memset(sendcounts, 0, nprocs*sizeof(int));
 		int soffset = 0, roffset = 0, index = 0;
 		unsigned seed;
@@ -74,6 +74,11 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		// Initial receive counts and offset array
 		MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, MPI_COMM_WORLD);
+
+		if (rank == 0) {
+			std::cout << n << " MPI_Alltoall is finished!" << std::endl;
+		}
+
 		for (int i = 0; i < nprocs; ++i) {
 			rdispls[i] = roffset;
 			roffset += recvcounts[i];
@@ -87,28 +92,28 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 				send_buffer[index++] = i + rank * 10;
 		}
 
-		MPI_Barrier(MPI_COMM_WORLD);
-
-		// MPI_alltoallv
-		for (int it = 0; it < loopcount; it++) {
-			double st = MPI_Wtime();
-			mpi_errno = MPI_Alltoallv(send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-			double et = MPI_Wtime();
-			double total_time = et - st;
-
-			if (mpi_errno != MPI_SUCCESS)
-				std::cout << "MPI_Alltoallv fail!" <<std::endl;
-
-
-			if (warmup == 0) {
-				double max_time = 0;
-				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-				if (total_time == max_time)
-					std::cout << "[MPIAlltoallv] " << nprocs << " " << n << " "<<  max_time << std::endl;
-			}
-		}
-
-		MPI_Barrier(MPI_COMM_WORLD);
+//		MPI_Barrier(MPI_COMM_WORLD);
+//
+//		// MPI_alltoallv
+//		for (int it = 0; it < loopcount; it++) {
+//			double st = MPI_Wtime();
+//			mpi_errno = MPI_Alltoallv(send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//			double et = MPI_Wtime();
+//			double total_time = et - st;
+//
+//			if (mpi_errno != MPI_SUCCESS)
+//				std::cout << "MPI_Alltoallv fail!" <<std::endl;
+//
+//
+//			if (warmup == 0) {
+//				double max_time = 0;
+//				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//				if (total_time == max_time)
+//					std::cout << "[MPIAlltoallv] " << nprocs << " " << n << " "<<  max_time << std::endl;
+//			}
+//		}
+//
+//		MPI_Barrier(MPI_COMM_WORLD);
 
 
 //		// MPICH_intra_scattered
