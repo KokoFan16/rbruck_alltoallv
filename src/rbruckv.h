@@ -37,7 +37,7 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts, int *sdispls
 									   MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
 									   MPI_Datatype recvtype, MPI_Comm comm);
 
-int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts, int *sdispls,
+int TTPL_BT_alltoallv_s1(int n, int r, int bblock, char *sendbuf, int *sendcounts, int *sdispls,
 									   MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
 									   MPI_Datatype recvtype, MPI_Comm comm);
 

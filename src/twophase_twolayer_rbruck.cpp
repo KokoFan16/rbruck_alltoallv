@@ -449,7 +449,7 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 }
 
 
-int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts,
+int TTPL_BT_alltoallv_s1(int n, int r, int bblock, char *sendbuf, int *sendcounts,
 									   int *sdispls, MPI_Datatype sendtype, char *recvbuf,
 									   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
 {
@@ -470,6 +470,7 @@ int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts,
 	int local_max_count = 0, max_send_count = 0, id = 0;
 	int updated_sentcouts[nprocs], rotate_index_array[nprocs], pos_status[nprocs];
 	char *temp_send_buffer, *extra_buffer, *temp_recv_buffer;
+	int mpi_errno = MPI_SUCCESS;
 
 	ngroup = nprocs / float(n); // number of groups
     if (r > n) { r = n; }
@@ -605,53 +606,57 @@ int TTPL_BT_alltoallv_s1(int n, int r, char *sendbuf, int *sendcounts,
 	}
 
 	st = MPI_Wtime();
-
-//	if (rank == 0) {
-//		for (int i = 0; i < max_send_count*nprocs; i++) {
-//			long long a;
-//			memcpy(&a, &extra_buffer[i*typesize], typesize);
-//			std::cout <<a << std::endl;
-//		}
-//	}
 	free(temp_recv_buffer);
 	free(temp_send_buffer);
 
-	int nquest = 2 * (ngroup-1) * n;
-	MPI_Request* req = (MPI_Request*)malloc(nquest*sizeof(MPI_Request));
-	MPI_Status* stat = (MPI_Status*)malloc(nquest*sizeof(MPI_Status));
+    if (bblock <= 0 || bblock > nprocs) bblock = nprocs;
 
-	nquest = 0;
-	for (int i = 0; i < ngroup; i++) {
-		int nsrc = (gid + i) % ngroup;
-		if (nsrc == gid) { continue; }
-		int src =  nsrc * n + grank;
+    MPI_Request* reqarray = (MPI_Request *)malloc(2 * bblock * sizeof(MPI_Request));
+    MPI_Status* starray = (MPI_Status *)malloc(2 * bblock * sizeof(MPI_Status));
+    int req_cnt = 0, ss = 0;
 
-		for (int j = 0; j < n; j++) {
-			id = nsrc*n+j;
-			MPI_Irecv(&recvbuf[rdispls[id]*typesize], recvcounts[id]*typesize, MPI_CHAR, src, j, comm, &req[nquest++]);
+	/* post only bblock isends/irecvs at a time as suggested by Tony Ladd */
+	for (int ii = 0; ii < nprocs; ii += bblock) {
+		req_cnt = 0;
+		ss = nprocs - ii < bblock ? nprocs - ii : bblock;
+
+		/* do the communication -- post ss sends and receives: */
+		for (int i = 0; i < ss; i++) {
+			int gi = (ii + i) / n;
+			int gr = (ii + i) % n;
+			int nsrc = (gid + gi) % ngroup;
+			if (nsrc == gid) { continue; }
+			id = nsrc * n + gr;
+
+			int src =  nsrc * n + grank;
+			mpi_errno =  MPI_Irecv(&recvbuf[rdispls[id]*typesize], recvcounts[id]*typesize, MPI_CHAR, src, gr, comm, &reqarray[req_cnt++]);
+			if (mpi_errno != MPI_SUCCESS) {return -1;}
 		}
-	}
 
-	for (int i = 0; i < ngroup; i++) {
-		int ndst = (gid - i + ngroup) % ngroup;
-		if (ndst == gid) { continue; }
-		int dst = ndst * n + grank;
+		for (int i = 0; i < ss; i++) {
+			int gi = (ii + i) / n;
+			int gr = (ii + i) % n;
+			int ndst = (gid - gi + ngroup) % ngroup;
+			if (ndst == gid) { continue; }
+			int dst = ndst * n + grank;
+			id = ndst * n + gr;
 
-		for (int j = 0; j < n; j++) {
-			id = ndst*n+j;
 			int ds = updated_sentcouts[rotate_index_array[id]]*typesize;
-			if (j == grank) {
-				MPI_Isend(&sendbuf[sdispls[id]*typesize], ds, MPI_CHAR, dst, j, comm, &req[nquest++]);
+			if (gr == grank) {
+				mpi_errno = MPI_Isend(&sendbuf[sdispls[id]*typesize], ds, MPI_CHAR, dst, gr, comm, &reqarray[req_cnt++]);
 			}
 			else {
-				MPI_Isend(&extra_buffer[id*max_send_count*typesize], ds, MPI_CHAR, dst, j, comm, &req[nquest++]);
+				mpi_errno = MPI_Isend(&extra_buffer[(id)*max_send_count*typesize], ds, MPI_CHAR, dst, gr, comm, &reqarray[req_cnt++]);
 			}
+			if (mpi_errno != MPI_SUCCESS) {return -1;}
 		}
-	}
-	MPI_Waitall(nquest, req, stat);
 
-	free(req);
-	free(stat);
+		mpi_errno = MPI_Waitall(req_cnt, reqarray, starray);
+		if (mpi_errno != MPI_SUCCESS) {return -1;}
+	}
+
+	free(reqarray);
+	free(starray);
 
 	free(extra_buffer);
 	et = MPI_Wtime();
