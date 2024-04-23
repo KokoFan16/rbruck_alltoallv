@@ -46,6 +46,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 	int mpi_errno = MPI_SUCCESS;
 	int basecount = bases.size();
+	int ngroup = nprocs / float(ncores);
 
 	for (int n = 2; n <= 2048; n = n * 2) {
 
@@ -90,8 +91,9 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
+
 		for (int i = 0; i < basecount; i++) {
-			for (int b = 1; b <= nprocs; b *= 2) {
+			for (int b = 1; b <= ngroup; b *= 2) {
 				for (int it=0; it < loopcount; it++) {
 
 					double st = MPI_Wtime();
