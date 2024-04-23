@@ -234,7 +234,7 @@ int TTPL_rbruck_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 }
 
 
-int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
+int TTPL_BT_alltoallv(int n, int r, int bblock, char *sendbuf, int *sendcounts,
 									   int *sdispls, MPI_Datatype sendtype, char *recvbuf,
 									   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
 {
@@ -255,6 +255,7 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 	int local_max_count = 0, max_send_count = 0, id = 0;
 	int updated_sentcouts[nprocs], rotate_index_array[nprocs], pos_status[nprocs];
 	char *temp_send_buffer, *extra_buffer, *temp_recv_buffer;
+	int mpi_errno = MPI_SUCCESS;
 
 	ngroup = nprocs / float(n); // number of groups
     if (r > n) { r = n; }
@@ -418,25 +419,55 @@ int TTPL_BT_alltoallv(int n, int r, char *sendbuf, int *sendcounts,
 	et = MPI_Wtime();
 	prepSP_time = et - st;
 
+
+	if (bblock <= 0 || bblock > ngroup) bblock = ngroup;
+
 	st = MPI_Wtime();
-	MPI_Request* req = (MPI_Request*)malloc(2*ngroup*sizeof(MPI_Request));
-	MPI_Status* stat = (MPI_Status*)malloc(2*ngroup*sizeof(MPI_Status));
-	for (int i = 0; i < ngroup; i++) {
+	MPI_Request* req = (MPI_Request*)malloc(2*bblock*sizeof(MPI_Request));
+	MPI_Status* stat = (MPI_Status*)malloc(2*bblock*sizeof(MPI_Status));
+	int req_cnt = 0, ss = 0;
 
-		int nsrc = (gid + i) % ngroup;
-		int src =  nsrc * n + grank; // avoid always to reach first master node
+	for (int ii = 0; ii < ngroup; ii += bblock) {
+		req_cnt = 0;
+		ss = ngroup - ii < bblock ? ngroup - ii : bblock;
 
-		MPI_Irecv(&recvbuf[nrdisp[nsrc]], nrecv[nsrc]*typesize, MPI_CHAR, src, 0, comm, &req[i]);
+		for (int i = 0; i < ss; i++) {
+			int nsrc = (gid + i + ii) % ngroup;
+			int src =  nsrc * n + grank; // avoid always to reach first master node
+
+			mpi_errno = MPI_Irecv(&recvbuf[nrdisp[nsrc]], nrecv[nsrc]*typesize, MPI_CHAR, src, 0, comm, &req[req_cnt++]);
+			if (mpi_errno != MPI_SUCCESS) {return -1;}
+
+		}
+
+		for (int i = 0; i < ss; i++) {
+			int ndst = (gid - i - ii + ngroup) % ngroup;
+			int dst = ndst * n + grank;
+
+			mpi_errno = MPI_Isend(&temp_send_buffer[nsdisp[ndst]], nsend[ndst]*typesize, MPI_CHAR, dst, 0, comm, &req[req_cnt++]);
+			if (mpi_errno != MPI_SUCCESS) {return -1;}
+		}
+
+		mpi_errno = MPI_Waitall(req_cnt, req, stat);
+		if (mpi_errno != MPI_SUCCESS) {return -1;}
 	}
 
-	for (int i = 0; i < ngroup; i++) {
-		int ndst = (gid - i + ngroup) % ngroup;
-		int dst = ndst * n + grank;
+//	for (int i = 0; i < ngroup; i++) {
+//
+//		int nsrc = (gid + i) % ngroup;
+//		int src =  nsrc * n + grank; // avoid always to reach first master node
+//
+//		MPI_Irecv(&recvbuf[nrdisp[nsrc]], nrecv[nsrc]*typesize, MPI_CHAR, src, 0, comm, &req[i]);
+//	}
 
-		MPI_Isend(&temp_send_buffer[nsdisp[ndst]], nsend[ndst]*typesize, MPI_CHAR, dst, 0, comm, &req[i+ngroup]);
-	}
+//	for (int i = 0; i < ngroup; i++) {
+//		int ndst = (gid - i + ngroup) % ngroup;
+//		int dst = ndst * n + grank;
+//
+//		MPI_Isend(&temp_send_buffer[nsdisp[ndst]], nsend[ndst]*typesize, MPI_CHAR, dst, 0, comm, &req[i+ngroup]);
+//	}
 
-	MPI_Waitall(2*ngroup, req, stat);
+//	MPI_Waitall(2*ngroup, req, stat);
 
 	free(req);
 	free(stat);

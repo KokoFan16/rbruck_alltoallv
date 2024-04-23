@@ -95,23 +95,23 @@ int run(int loopcount, int ncores, std::vector<int> bases, int warmup, std::vect
 	MPI_Barrier(MPI_COMM_WORLD);
 
 
-	for (int i = 0; i < basecount; i++) {
-		for (int it=0; it < loopcount; it++) {
-			double start = MPI_Wtime();
-			TTPL_BT_alltoallv(ncores, bases[i], (char*)sendbuf, sendsarray.data(), sdispls, MPI_CHAR, (char*)recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
-			double end = MPI_Wtime();
-			double comm_time = (end - start);
-
-			if (warmup == 0) {
-				double max_time = 0;
-				MPI_Allreduce(&comm_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-				if (max_time == comm_time)
-					std::cout << "TwoPhaseLayer, " << rank << " " << comm_time << " " << send_tsize << " " <<  recv_tsize << std::endl;
-			}
-		}
-	}
-
-	MPI_Barrier(MPI_COMM_WORLD);
+//	for (int i = 0; i < basecount; i++) {
+//		for (int it=0; it < loopcount; it++) {
+//			double start = MPI_Wtime();
+//			TTPL_BT_alltoallv(ncores, bases[i], (char*)sendbuf, sendsarray.data(), sdispls, MPI_CHAR, (char*)recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
+//			double end = MPI_Wtime();
+//			double comm_time = (end - start);
+//
+//			if (warmup == 0) {
+//				double max_time = 0;
+//				MPI_Allreduce(&comm_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//				if (max_time == comm_time)
+//					std::cout << "TwoPhaseLayer, " << rank << " " << comm_time << " " << send_tsize << " " <<  recv_tsize << std::endl;
+//			}
+//		}
+//	}
+//
+//	MPI_Barrier(MPI_COMM_WORLD);
 
     free(sendbuf);
     free(recvbuf);
