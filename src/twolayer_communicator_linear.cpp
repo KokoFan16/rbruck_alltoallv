@@ -85,12 +85,13 @@ int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdi
 
 
 
-int twolayer_communicator_linear_s2(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
+int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
 
 	int rank, nprocs, sendsize, recvsize, color;
     MPI_Comm intra_comm;
     char *recvaddr, *sendaddr;
     int *intra_sendcounts, *intra_sdispls, *intra_recvcounts, *intra_rdispls;
+    int mpi_errno = MPI_SUCCESS;
 
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &nprocs);
@@ -115,43 +116,144 @@ int twolayer_communicator_linear_s2(int n, char *sendbuf, int *sendcounts, int *
     intra_rdispls = (int *) rdispls + n*color;
 
     // intra-node alltoallv
-    MPICH_intra_scattered(0, sendbuf, intra_sendcounts, intra_sdispls, sendtype, recvbuf, intra_recvcounts, intra_rdispls, recvtype, intra_comm);
+    MPICH_intra_scattered(bblock, sendbuf, intra_sendcounts, intra_sdispls, sendtype, recvbuf, intra_recvcounts, intra_rdispls, recvtype, intra_comm);
 
-	int group_rank, ngroup, nquest=0;
+	int group_rank, ngroup;
     MPI_Comm_rank(intra_comm, &group_rank);
 
     ngroup = ceil(nprocs / float(n)); // number of groups
 
-	MPI_Request* req = (MPI_Request*)malloc(2*n*(ngroup-1)*sizeof(MPI_Request));
-	MPI_Status* stat = (MPI_Status*)malloc(2*n*(ngroup-1)*sizeof(MPI_Status));
 
-    for (int i = 1; i < ngroup; i++) {
+    if (bblock <= 0 || bblock > nprocs) bblock = nprocs;
+    int req_cnt = 0, ss = 0;
 
-    	int ndst = (color + i) % ngroup;
-    	int nsrc = (color - i + ngroup) % ngroup;
+	MPI_Request* req = (MPI_Request*)malloc(2*bblock*sizeof(MPI_Request));
+	MPI_Status* stat = (MPI_Status*)malloc(2*bblock*sizeof(MPI_Status));
 
-    	if (nsrc != color) {
-    		for (int j = 0; j < n; j++) {
-    			int src =  nsrc * n + ((j + group_rank) % n);
-    			if (src < nprocs) {
-    				recvaddr = (char *) recvbuf + rdispls[src] * recvsize;
-    				MPI_Irecv(recvaddr, recvcounts[src]*recvsize, MPI_CHAR, src, 0, comm, &req[nquest++]);
-    			}
-    		}
-    	}
 
-    	if (ndst != color) {
-    		for (int j = 0; j < n; j++) {
-    			int dst = ndst * n + ((j - group_rank + n) % n);
-    			if (dst < nprocs) {
-					sendaddr = (char *) sendbuf + sdispls[dst] * sendsize;
-					MPI_Isend(sendaddr, sendcounts[dst]*sendsize, MPI_CHAR, dst, 0, comm, &req[nquest++]);
-    			}
-    		}
-    	}
-    }
+	for (int ii = 1; ii < nprocs; ii += bblock) {
+		req_cnt = 0;
+		ss = nprocs - ii < bblock ? nprocs - ii : bblock;
 
-	MPI_Waitall(nquest, req, stat);
+		for (int i = 0; i < ss; i++) {
+			int gi = (ii + i) / n;
+			int gr = (ii + i) % n;
+			int nsrc = (color - gi + ngroup) % ngroup;
+
+			if (nsrc == color) { continue; }
+
+
+//			if (nsrc != color) {
+//				int src =  nsrc * n + ((gr + group_rank) % n);
+				int src =  nsrc * n + gr;
+//				int dst = ndst * n + grank;
+
+
+//				if (rank == 0) {
+//					std::cout << "recv " << ii << " " << i << " " <<  gi << " " << gr << " " << nsrc << " " << src << std::endl;
+//				}
+
+				if (src < nprocs) {
+					recvaddr = (char *) recvbuf + rdispls[src] * recvsize;
+					mpi_errno = MPI_Irecv(recvaddr, recvcounts[src]*recvsize, MPI_CHAR, src, 0, comm, &req[req_cnt++]);
+					if (mpi_errno != MPI_SUCCESS) {return -1;}
+				}
+//			}
+		}
+
+		for (int i = 0; i < ss; i++) {
+			int gi = (ii + i) / n;
+			int gr = (ii + i) % n;
+			int ndst = (color + gi) % ngroup;
+
+			if (ndst == color) { continue; }
+
+//			int dst = ndst * n + ((gr - group_rank + n) % n);
+			int dst =  ndst * n + gr;
+			if (dst < nprocs) {
+				sendaddr = (char *) sendbuf + sdispls[dst] * sendsize;
+
+//				if (rank == 0) {
+//					std::cout << "send " << ii << " " << i << " " <<  gi << " " << gr << " " << ndst << " " << dst << std::endl;
+//				}
+
+				mpi_errno = MPI_Isend(sendaddr, sendcounts[dst]*sendsize, MPI_CHAR, dst, 0, comm, &req[req_cnt++]);
+				if (mpi_errno != MPI_SUCCESS) {return -1;}
+			}
+		}
+
+		mpi_errno = MPI_Waitall(req_cnt, req, stat);
+		if (mpi_errno != MPI_SUCCESS) {return -1;}
+
+
+	}
+
+//    for (int i = 1; i < ngroup; i++) {
+//    	int nsrc = (color - i + ngroup) % ngroup;
+//
+//    	if (nsrc != color) {
+//    		for (int j = 0; j < n; j++) {
+//    			int src =  nsrc * n + ((j + group_rank) % n);
+//    			if (src < nprocs) {
+//    				recvaddr = (char *) recvbuf + rdispls[src] * recvsize;
+//    				MPI_Irecv(recvaddr, recvcounts[src]*recvsize, MPI_CHAR, src, 0, comm, &req[nquest++]);
+//    			}
+//    		}
+//    	}
+//    }
+//
+//    for (int i = 1; i < ngroup; i++) {
+//
+//    	int ndst = (color + i) % ngroup;
+//    	if (ndst != color) {
+//    		for (int j = 0; j < n; j++) {
+//    			int dst = ndst * n + ((j - group_rank + n) % n);
+//    			if (dst < nprocs) {
+//					sendaddr = (char *) sendbuf + sdispls[dst] * sendsize;
+//					MPI_Isend(sendaddr, sendcounts[dst]*sendsize, MPI_CHAR, dst, 0, comm, &req[nquest++]);
+//    			}
+//    		}
+//    	}
+//    }
+
+
+
+//    /* post only bblock isends/irecvs at a time as suggested by Tony Ladd */
+//	for (ii = 0; ii < comm_size; ii += bblock) {
+//		req_cnt = 0;
+//		ss = comm_size - ii < bblock ? comm_size - ii : bblock;
+//
+//		/* do the communication -- post ss sends and receives: */
+//		for (i = 0; i < ss; i++) {
+//			dst = (rank + i + ii) % comm_size;
+//
+//			if (recvcounts[dst]) {
+//				mpi_errno = MPI_Irecv((char *) recvbuf + rdispls[dst] * recv_extent,
+//									   recvcounts[dst], recvtype, dst,
+//									   0, comm, &reqarray[req_cnt]);
+//
+//				if (mpi_errno != MPI_SUCCESS) {return -1;}
+//				req_cnt++;
+//			}
+//		}
+//
+//		for (i = 0; i < ss; i++) {
+//			dst = (rank - i - ii + comm_size) % comm_size;
+//			if (sendcounts[dst]) {
+//				mpi_errno = MPI_Isend((char *) sendbuf + sdispls[dst] * send_extent,
+//									   sendcounts[dst], sendtype, dst,
+//									   0, comm, &reqarray[req_cnt]);
+//
+//				if (mpi_errno != MPI_SUCCESS) {return -1;}
+//				req_cnt++;
+//			}
+//		}
+//
+//		mpi_errno = MPI_Waitall(req_cnt, reqarray, starray);
+//		if (mpi_errno != MPI_SUCCESS) {return -1;}
+//	}
+//
+//	MPI_Waitall(nquest, req, stat);
 
 	free(req);
 	free(stat);

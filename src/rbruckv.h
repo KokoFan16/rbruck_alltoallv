@@ -64,7 +64,7 @@ int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdi
 								 MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
 								 MPI_Datatype recvtype, MPI_Comm comm);
 
-int twolayer_communicator_linear_s2(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
+int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
