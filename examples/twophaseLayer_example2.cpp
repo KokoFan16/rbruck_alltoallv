@@ -140,6 +140,15 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 			else if (n < 512 ) { max_bblock = 1024; }
 			else { max_bblock = 512; }
 		}
+
+		if (nprocs == 16384) {
+			if (n < 8 ) { max_bblock = 1024; }
+			else if (n < 32 ) { max_bblock = 512; }
+			else if (n < 256 ) { max_bblock = 256; }
+			else if (n < 1024 ) { max_bblock = 128; }
+			else { max_bblock = 64; }
+		}
+
 		for (int i = 0; i < basecount; i++) {
 			for (int b = 1; b <= max_bblock; b *= 2) {
 				for (int it=0; it < loopcount; it++) {
