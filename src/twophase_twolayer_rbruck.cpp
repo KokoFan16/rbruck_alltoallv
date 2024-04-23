@@ -452,23 +452,6 @@ int TTPL_BT_alltoallv(int n, int r, int bblock, char *sendbuf, int *sendcounts,
 		if (mpi_errno != MPI_SUCCESS) {return -1;}
 	}
 
-//	for (int i = 0; i < ngroup; i++) {
-//
-//		int nsrc = (gid + i) % ngroup;
-//		int src =  nsrc * n + grank; // avoid always to reach first master node
-//
-//		MPI_Irecv(&recvbuf[nrdisp[nsrc]], nrecv[nsrc]*typesize, MPI_CHAR, src, 0, comm, &req[i]);
-//	}
-
-//	for (int i = 0; i < ngroup; i++) {
-//		int ndst = (gid - i + ngroup) % ngroup;
-//		int dst = ndst * n + grank;
-//
-//		MPI_Isend(&temp_send_buffer[nsdisp[ndst]], nsend[ndst]*typesize, MPI_CHAR, dst, 0, comm, &req[i+ngroup]);
-//	}
-
-//	MPI_Waitall(2*ngroup, req, stat);
-
 	free(req);
 	free(stat);
 
