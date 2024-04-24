@@ -89,23 +89,24 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
+		int max_bblock = nprocs;
 		for (int i = 0; i < basecount; i++) {
-			for (int b = 1; b <= nprocs; b *= 2) {
+			for (int b = 1; b <= max_bblock; b *= 2) {
 				for (int it=0; it < loopcount; it++) {
 
 					double st = MPI_Wtime();
-					mpi_errno = TTPL_BT_alltoallv(ncores, bases[i], b, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+					mpi_errno = TTPL_BT_alltoallv_s1(ncores, bases[i], b, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
 					double et = MPI_Wtime();
 					double total_time = et - st;
 
 					if (mpi_errno != MPI_SUCCESS)
-						std::cout << "TTPL_BT_alltoallv fail!" <<std::endl;
+						std::cout << "TTPL_BT_alltoallv_s1 fail!" <<std::endl;
 
 					// check correctness
 					int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
 
 					if (error > 0) {
-						std::cout << "[TTPL] base " << bases[i] << " has errors" << std::endl;
+						std::cout << "[TTPL_S1] base " << bases[i] << " has errors" << std::endl;
 	//					MPI_Abort(MPI_COMM_WORLD, -1);
 					}
 
@@ -118,16 +119,55 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 									+ prepData_time + excgMeta_time + excgData_time + replace_time + orgData_time
 									+ prepSP_time + SP_time;
 
-							std::cout << "[TTPL] " << nprocs << ", " << n << ", " << b << ", " << bases[i] << ", " << ttime <<
+							std::cout << "[TTPL_S1] " << nprocs << ", " << n << ", " << b << ", " << bases[i] << ", " << ttime <<
 							" [" << init_time << ", " << findMax_time << ", " << rotateIndex_time << ", " <<
 							alcCopy_time << ", " << getBlock_time << ", " << prepData_time << ", " << excgMeta_time
-							<< ", " << excgData_time << ", " << replace_time << ", " << orgData_time << ", " << prepSP_time << ", "
-							<< SP_time << "] " << std::endl;
+							<< ", " << excgData_time << ", " << replace_time << ", " << SP_time << "] " << std::endl;
 						}
 					}
 				}
 			}
 		}
+
+//		for (int i = 0; i < basecount; i++) {
+//			for (int b = 1; b <= nprocs; b *= 2) {
+//				for (int it=0; it < loopcount; it++) {
+//
+//					double st = MPI_Wtime();
+//					mpi_errno = TTPL_BT_alltoallv(ncores, bases[i], b, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//					double et = MPI_Wtime();
+//					double total_time = et - st;
+//
+//					if (mpi_errno != MPI_SUCCESS)
+//						std::cout << "TTPL_BT_alltoallv fail!" <<std::endl;
+//
+//					// check correctness
+//					int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+//
+//					if (error > 0) {
+//						std::cout << "[TTPL] base " << bases[i] << " has errors" << std::endl;
+//	//					MPI_Abort(MPI_COMM_WORLD, -1);
+//					}
+//
+//					if (warmup == 0) {
+//						double max_time = 0;
+//						MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//
+//						if (total_time == max_time) {
+//							double ttime = init_time + findMax_time + rotateIndex_time + alcCopy_time + getBlock_time
+//									+ prepData_time + excgMeta_time + excgData_time + replace_time + orgData_time
+//									+ prepSP_time + SP_time;
+//
+//							std::cout << "[TTPL] " << nprocs << ", " << n << ", " << b << ", " << bases[i] << ", " << ttime <<
+//							" [" << init_time << ", " << findMax_time << ", " << rotateIndex_time << ", " <<
+//							alcCopy_time << ", " << getBlock_time << ", " << prepData_time << ", " << excgMeta_time
+//							<< ", " << excgData_time << ", " << replace_time << ", " << orgData_time << ", " << prepSP_time << ", "
+//							<< SP_time << "] " << std::endl;
+//						}
+//					}
+//				}
+//			}
+//		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
