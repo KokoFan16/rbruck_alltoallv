@@ -134,6 +134,9 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
+		if (nprocs == 4096 || nprocs == 2048) {
+			if (n > 512 ) { max_bblock = 1024; }
+		}
 
 		if (nprocs == 8192) {
 			if (n < 8 ) { max_bblock = 2048; }
