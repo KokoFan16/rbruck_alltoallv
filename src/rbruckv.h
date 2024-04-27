@@ -41,7 +41,7 @@ int TTPL_BT_alltoallv_s1(int n, int r, int bblock, char *sendbuf, int *sendcount
 									   MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
 									   MPI_Datatype recvtype, MPI_Comm comm);
 
-int TTPL_BT_alltoallv_s2(int n, int r, int bs, char *sendbuf, int *sendcounts, int *sdispls,
+int TTPL_BT_alltoallv_s2(int n, int r, int bblock, char *sendbuf, int *sendcounts, int *sdispls,
 									   MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls,
 									   MPI_Datatype recvtype, MPI_Comm comm);
 
@@ -67,7 +67,7 @@ int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdi
 int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
-int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
+int twolayer_communicator_linear_s3(int n, int bblock1, int bblock2, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 int twolayer_communicator_linear_s4(int block, int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,

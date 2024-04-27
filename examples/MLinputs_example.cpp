@@ -44,9 +44,9 @@ int main(int argc, char **argv) {
     readinputs(rank, filename, sendsarray, recvcounts);
 
 //    run(10, ncores, bases, 1, sendsarray, recvcounts);
-
-    run(loopCount, ncores, bases, 0, bblock, sendsarray, recvcounts);
-
+//
+//    run(loopCount, ncores, bases, 0, bblock, sendsarray, recvcounts);
+//
 
     MPI_Finalize();
     return 0;
@@ -150,14 +150,22 @@ void readinputs(int rank, std::string filename, std::vector<int> &sendsarray, st
 
     while (std::getline(file, str)) {
 
-    	std::string item = getNItem(str, rank, " ", 0);
-    	recvcounts.push_back(stol(item));
+//    	std::string sitem = getNItem(str, count, " ", 0);
+    	std::cout << str << std::endl;
 
-    	if (rank == count) {
-    		std::stringstream ss(str);
-    		std::string number;
-    		while (ss >> number) sendsarray.push_back(stol(number));
-    	}
+//    	for (int i = 0; i < 512; i++) {
+//    		std::string item = getNItem(str, i, " ", 0);
+//    		recvcounts.push_back(stol(item));
+//    	}
+
+//    	std::string item = getNItem(str, rank, " ", 0);
+//    	recvcounts.push_back(stol(item));
+//
+//    	if (rank == count) {
+//    		std::stringstream ss(str);
+//    		std::string number;
+//    		while (ss >> number) sendsarray.push_back(stol(number));
+//    	}
         count++;
     }
 }
