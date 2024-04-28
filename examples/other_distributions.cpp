@@ -71,7 +71,8 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, int bblock1, int 
 
 		std::normal_distribution<double> d(mean, deviation);
 
-		std::cout << rank << " normal_distribution [";
+		if (rank == 0)
+			std::cout << rank << " normal_distribution [";
 		for(int n = 0; n < nprocs; n++) {
 			double value;
 			do {
@@ -79,22 +80,26 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, int bblock1, int 
 			} while (value < 0 || value > maxValue);
 
 			sendcounts[n] = (int) value;
-			std::cout << value << ", ";
+			if (rank == 0)
+				std::cout << value << ", ";
 		}
-		std::cout << "]" << std::endl;
+		if (rank == 0)
+			std::cout << "]" << std::endl;
 	}
 
 	// Power law distribution
 	if (dist == 1) {
 		double dx = (double) maxValue;
-
-		std::cout << rank << " powerLaw_distribution [";
+		if (rank == 0)
+			std::cout << rank << " powerLaw_distribution [";
 		for(int n = 0; n < nprocs; n++) {
 			sendcounts[n] = (int) dx;
-			std::cout << dx << ", ";
+			if (rank == 0)
+				std::cout << dx << ", ";
 			dx = dx * x; // 0.999
 		}
-		std::cout << "]" << std::endl;
+		if (rank == 0)
+			std::cout << "]" << std::endl;
 	}
 
 	// Random shuffling the sendcounts array
