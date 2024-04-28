@@ -13,6 +13,7 @@ add_executable(LTRNA ./twophaseLayer_example2.cpp)
 add_executable(TTPL ./twophaseLayer_example3.cpp)
 add_executable(TLLiner_S2 ./twophaseLayer_example4.cpp)
 add_executable(FFT ./FFT_distribution.cpp)
+add_executable(otherDis ./other_distributions.cpp)
 
 
 
@@ -26,3 +27,4 @@ target_link_libraries(LTRNA rbruckvLib)
 target_link_libraries(TTPL rbruckvLib)
 target_link_libraries(TLLiner_S2 rbruckvLib)
 target_link_libraries(FFT rbruckvLib)
+target_link_libraries(otherDis rbruckvLib)
