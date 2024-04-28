@@ -130,7 +130,6 @@ int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendc
 	MPI_Request* req = (MPI_Request*)malloc(2*bblock*sizeof(MPI_Request));
 	MPI_Status* stat = (MPI_Status*)malloc(2*bblock*sizeof(MPI_Status));
 
-
 	for (int ii = 1; ii < nprocs; ii += bblock) {
 		req_cnt = 0;
 		ss = nprocs - ii < bblock ? nprocs - ii : bblock;
@@ -142,23 +141,12 @@ int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendc
 
 			if (nsrc == color) { continue; }
 
-
-//			if (nsrc != color) {
-//				int src =  nsrc * n + ((gr + group_rank) % n);
-				int src =  nsrc * n + gr;
-//				int dst = ndst * n + grank;
-
-
-//				if (rank == 0) {
-//					std::cout << "recv " << ii << " " << i << " " <<  gi << " " << gr << " " << nsrc << " " << src << std::endl;
-//				}
-
-				if (src < nprocs) {
-					recvaddr = (char *) recvbuf + rdispls[src] * recvsize;
-					mpi_errno = MPI_Irecv(recvaddr, recvcounts[src]*recvsize, MPI_CHAR, src, 0, comm, &req[req_cnt++]);
-					if (mpi_errno != MPI_SUCCESS) {return -1;}
-				}
-//			}
+			int src =  nsrc * n + gr;
+			if (src < nprocs) {
+				recvaddr = (char *) recvbuf + rdispls[src] * recvsize;
+				mpi_errno = MPI_Irecv(recvaddr, recvcounts[src]*recvsize, MPI_CHAR, src, 0, comm, &req[req_cnt++]);
+				if (mpi_errno != MPI_SUCCESS) {return -1;}
+			}
 		}
 
 		for (int i = 0; i < ss; i++) {
@@ -168,15 +156,9 @@ int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendc
 
 			if (ndst == color) { continue; }
 
-//			int dst = ndst * n + ((gr - group_rank + n) % n);
 			int dst =  ndst * n + gr;
 			if (dst < nprocs) {
 				sendaddr = (char *) sendbuf + sdispls[dst] * sendsize;
-
-//				if (rank == 0) {
-//					std::cout << "send " << ii << " " << i << " " <<  gi << " " << gr << " " << ndst << " " << dst << std::endl;
-//				}
-
 				mpi_errno = MPI_Isend(sendaddr, sendcounts[dst]*sendsize, MPI_CHAR, dst, 0, comm, &req[req_cnt++]);
 				if (mpi_errno != MPI_SUCCESS) {return -1;}
 			}
@@ -184,76 +166,7 @@ int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendc
 
 		mpi_errno = MPI_Waitall(req_cnt, req, stat);
 		if (mpi_errno != MPI_SUCCESS) {return -1;}
-
-
 	}
-
-//    for (int i = 1; i < ngroup; i++) {
-//    	int nsrc = (color - i + ngroup) % ngroup;
-//
-//    	if (nsrc != color) {
-//    		for (int j = 0; j < n; j++) {
-//    			int src =  nsrc * n + ((j + group_rank) % n);
-//    			if (src < nprocs) {
-//    				recvaddr = (char *) recvbuf + rdispls[src] * recvsize;
-//    				MPI_Irecv(recvaddr, recvcounts[src]*recvsize, MPI_CHAR, src, 0, comm, &req[nquest++]);
-//    			}
-//    		}
-//    	}
-//    }
-//
-//    for (int i = 1; i < ngroup; i++) {
-//
-//    	int ndst = (color + i) % ngroup;
-//    	if (ndst != color) {
-//    		for (int j = 0; j < n; j++) {
-//    			int dst = ndst * n + ((j - group_rank + n) % n);
-//    			if (dst < nprocs) {
-//					sendaddr = (char *) sendbuf + sdispls[dst] * sendsize;
-//					MPI_Isend(sendaddr, sendcounts[dst]*sendsize, MPI_CHAR, dst, 0, comm, &req[nquest++]);
-//    			}
-//    		}
-//    	}
-//    }
-
-
-
-//    /* post only bblock isends/irecvs at a time as suggested by Tony Ladd */
-//	for (ii = 0; ii < comm_size; ii += bblock) {
-//		req_cnt = 0;
-//		ss = comm_size - ii < bblock ? comm_size - ii : bblock;
-//
-//		/* do the communication -- post ss sends and receives: */
-//		for (i = 0; i < ss; i++) {
-//			dst = (rank + i + ii) % comm_size;
-//
-//			if (recvcounts[dst]) {
-//				mpi_errno = MPI_Irecv((char *) recvbuf + rdispls[dst] * recv_extent,
-//									   recvcounts[dst], recvtype, dst,
-//									   0, comm, &reqarray[req_cnt]);
-//
-//				if (mpi_errno != MPI_SUCCESS) {return -1;}
-//				req_cnt++;
-//			}
-//		}
-//
-//		for (i = 0; i < ss; i++) {
-//			dst = (rank - i - ii + comm_size) % comm_size;
-//			if (sendcounts[dst]) {
-//				mpi_errno = MPI_Isend((char *) sendbuf + sdispls[dst] * send_extent,
-//									   sendcounts[dst], sendtype, dst,
-//									   0, comm, &reqarray[req_cnt]);
-//
-//				if (mpi_errno != MPI_SUCCESS) {return -1;}
-//				req_cnt++;
-//			}
-//		}
-//
-//		mpi_errno = MPI_Waitall(req_cnt, reqarray, starray);
-//		if (mpi_errno != MPI_SUCCESS) {return -1;}
-//	}
-//
-//	MPI_Waitall(nquest, req, stat);
 
 	free(req);
 	free(stat);
@@ -265,7 +178,7 @@ int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendc
 
 
 
-int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
+int twolayer_communicator_linear_s3(int n, int bblock1, int bblock2, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
 
 	int rank, nprocs, sendsize, recvsize;
 	int ngroup, gid, grank, intrap;
@@ -290,26 +203,66 @@ int twolayer_communicator_linear_s3(int n, char *sendbuf, int *sendcounts, int *
 
 	intrap = n*gid;
 
+	if (bblock1 <= 0 || bblock1 > n) bblock1 = n;
+	if (bblock1 <= 0 || bblock1 > nprocs) bblock1 = nprocs;
+
+	int bmax = bblock1 > bblock2? bblock1: bblock2;
+
 	/* Intra-node Comm */
-	MPI_Request* req = (MPI_Request*)malloc(2*nprocs*sizeof(MPI_Request));
-	MPI_Status* stat = (MPI_Status*)malloc(2*nprocs*sizeof(MPI_Status));
-	for (int i = 0; i < n; i++) {
-		src  = (grank + i) % n;
-		rp = intrap + src;
-		if (rp < nprocs) {
-			recvaddr = (char *) recvbuf + rdispls[rp] * recvsize;
-			MPI_Irecv(recvaddr, recvcounts[rp]*recvsize, MPI_CHAR, rp, 0, comm, &req[nquest++]);
+	MPI_Request* req = (MPI_Request*)malloc(2*bmax*sizeof(MPI_Request));
+	MPI_Status* stat = (MPI_Status*)malloc(2*bmax*sizeof(MPI_Status));
+	int ss = 0;
+
+	for (int ii = 1; ii < n; ii += bblock1) {
+		nquest = 0;
+		ss = nprocs - ii < bblock1 ? nprocs - ii : bblock1;
+
+		for (int i = 0; i < ss; i++) {
+			src  = (grank + ii + i) % n;
+			rp = intrap + src;
+
+			if (rp < nprocs) {
+				recvaddr = (char *) recvbuf + rdispls[rp] * recvsize;
+				MPI_Irecv(recvaddr, recvcounts[rp]*recvsize, MPI_CHAR, rp, 0, comm, &req[nquest++]);
+			}
 		}
-	}
-	for (int i = 0; i < n; i++) {
-		dst = (grank - i + n) % n;
-		sp = intrap + dst;
-		if (sp < nprocs) {
-			sendaddr = (char *) sendbuf + sdispls[sp] * sendsize;
-			MPI_Isend(sendaddr, sendcounts[sp]*sendsize, MPI_CHAR, sp, 0, comm, &req[nquest++]);
+
+		for (int i = 0; i < ss; i++) {
+			dst = (grank - i - ii + n) % n;
+			sp = intrap + dst;
+			if (sp < nprocs) {
+				sendaddr = (char *) sendbuf + sdispls[sp] * sendsize;
+				MPI_Isend(sendaddr, sendcounts[sp]*sendsize, MPI_CHAR, sp, 0, comm, &req[nquest++]);
+			}
 		}
+		MPI_Waitall(nquest, req, stat);
 	}
-	MPI_Waitall(nquest, req, stat);
+
+//
+//	for (int ii = 1; ii < nprocs; ii += bblock) {
+//			req_cnt = 0;
+//			ss = nprocs - ii < bblock ? nprocs - ii : bblock;
+//
+//			for (int i = 0; i < ss; i++) {
+//
+//
+//	for (int i = 0; i < n; i++) {
+//		src  = (grank + i) % n;
+//		rp = intrap + src;
+//		if (rp < nprocs) {
+//			recvaddr = (char *) recvbuf + rdispls[rp] * recvsize;
+//			MPI_Irecv(recvaddr, recvcounts[rp]*recvsize, MPI_CHAR, rp, 0, comm, &req[nquest++]);
+//		}
+//	}
+//	for (int i = 0; i < n; i++) {
+//		dst = (grank - i + n) % n;
+//		sp = intrap + dst;
+//		if (sp < nprocs) {
+//			sendaddr = (char *) sendbuf + sdispls[sp] * sendsize;
+//			MPI_Isend(sendaddr, sendcounts[sp]*sendsize, MPI_CHAR, sp, 0, comm, &req[nquest++]);
+//		}
+//	}
+//	MPI_Waitall(nquest, req, stat);
 
 	/* Inter-node Comm */
 	nquest = 0;
