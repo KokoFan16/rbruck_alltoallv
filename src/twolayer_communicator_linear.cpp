@@ -85,7 +85,7 @@ int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdi
 
 
 
-int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
+int twolayer_communicator_linear_s2(int n, int bblock1, int bblock2, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
 
 	int rank, nprocs, sendsize, recvsize, color;
     MPI_Comm intra_comm;
@@ -115,8 +115,11 @@ int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendc
     intra_sdispls = (int *) sdispls + n*color;
     intra_rdispls = (int *) rdispls + n*color;
 
+
+    if (bblock1 <= 0 || bblock1 > n) bblock1 = n;
+
     // intra-node alltoallv
-    MPICH_intra_scattered(bblock, sendbuf, intra_sendcounts, intra_sdispls, sendtype, recvbuf, intra_recvcounts, intra_rdispls, recvtype, intra_comm);
+    MPICH_intra_scattered(bblock1, sendbuf, intra_sendcounts, intra_sdispls, sendtype, recvbuf, intra_recvcounts, intra_rdispls, recvtype, intra_comm);
 
 	int group_rank, ngroup;
     MPI_Comm_rank(intra_comm, &group_rank);
@@ -124,15 +127,16 @@ int twolayer_communicator_linear_s2(int n, int bblock, char *sendbuf, int *sendc
     ngroup = ceil(nprocs / float(n)); // number of groups
 
 
-    if (bblock <= 0 || bblock > nprocs) bblock = nprocs;
+    int max_comm = nprocs - n;
+    if (bblock2 <= 0 || bblock2 > max_comm) bblock2 = max_comm;
     int req_cnt = 0, ss = 0;
 
-	MPI_Request* req = (MPI_Request*)malloc(2*bblock*sizeof(MPI_Request));
-	MPI_Status* stat = (MPI_Status*)malloc(2*bblock*sizeof(MPI_Status));
+	MPI_Request* req = (MPI_Request*)malloc(2*bblock2*sizeof(MPI_Request));
+	MPI_Status* stat = (MPI_Status*)malloc(2*bblock2*sizeof(MPI_Status));
 
-	for (int ii = 1; ii < nprocs; ii += bblock) {
+	for (int ii = 1; ii < nprocs; ii += bblock2) {
 		req_cnt = 0;
-		ss = nprocs - ii < bblock ? nprocs - ii : bblock;
+		ss = nprocs - ii < bblock2 ? nprocs - ii : bblock2;
 
 		for (int i = 0; i < ss; i++) {
 			int gi = (ii + i) / n;

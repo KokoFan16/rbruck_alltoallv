@@ -110,28 +110,32 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		for (int b = 1; b <= nprocs; b *= 2){
-			for (int it = 0; it < loopcount; it++) {
-				double st = MPI_Wtime();
-				mpi_errno = twolayer_communicator_linear_s2(ncores, b, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-				double et = MPI_Wtime();
-				double total_time = et - st;
+		for (int b1 = 1; b1 <= ncores; b1 *= 2){
+			for (int b2 = 1; b2 <= nprocs - ncores; b2 *= 2){
+				for (int it = 0; it < loopcount; it++) {
+					double st = MPI_Wtime();
+					mpi_errno = twolayer_communicator_linear_s2(ncores, b1, b2, (char*)send_buffer, sendcounts, sdispls,
+							MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls,
+							MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+					double et = MPI_Wtime();
+					double total_time = et - st;
 
-				if (mpi_errno != MPI_SUCCESS) { std::cout << "twolayer_communicator_linear fail!" <<std::endl; }
+					if (mpi_errno != MPI_SUCCESS) { std::cout << "twolayer_communicator_linear fail!" <<std::endl; }
 
-				// check correctness
-				int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+					// check correctness
+					int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
 
-				if (error > 0) {
-					std::cout << "[TLLiner_S2] " << n << " has errors" << std::endl;
-	//				MPI_Abort(MPI_COMM_WORLD, -1);
-				}
+					if (error > 0) {
+						std::cout << "[TLLiner_S2] " << n << " has errors" << std::endl;
+		//				MPI_Abort(MPI_COMM_WORLD, -1);
+					}
 
-				if (warmup == 0) {
-					double max_time = 0;
-					MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-					if (total_time == max_time)
-						std::cout << "[TLLiner_S2] " << nprocs << " " << n  << " " << b << " " << max_time << std::endl;
+					if (warmup == 0) {
+						double max_time = 0;
+						MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+						if (total_time == max_time)
+							std::cout << "[TLLiner_S2] " << nprocs << " " << n  << " " << b1 << " " << b2 << " " << max_time << std::endl;
+					}
 				}
 			}
 		}
