@@ -7,6 +7,9 @@
 
 #include "rbruckv.h"
 
+double intra_time = 0;
+double* iteration_time;
+
 int twolayer_communicator_linear(int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
 
 	int rank, nprocs, sendsize, recvsize, color;
@@ -119,7 +122,10 @@ int twolayer_communicator_linear_s2(int n, int bblock1, int bblock2, char *sendb
     if (bblock1 <= 0 || bblock1 > n) bblock1 = n;
 
     // intra-node alltoallv
+    double st = MPI_Wtime();
     MPICH_intra_scattered(bblock1, sendbuf, intra_sendcounts, intra_sdispls, sendtype, recvbuf, intra_recvcounts, intra_rdispls, recvtype, intra_comm);
+    double et = MPI_Wtime();
+    intra_time = et - st;
 
 	int group_rank, ngroup;
     MPI_Comm_rank(intra_comm, &group_rank);
@@ -134,7 +140,10 @@ int twolayer_communicator_linear_s2(int n, int bblock1, int bblock2, char *sendb
 	MPI_Request* req = (MPI_Request*)malloc(2*bblock2*sizeof(MPI_Request));
 	MPI_Status* stat = (MPI_Status*)malloc(2*bblock2*sizeof(MPI_Status));
 
+	iteration_time = (double*) malloc(nprocs * sizeof(double));
+
 	for (int ii = 1; ii < nprocs; ii += bblock2) {
+		st = MPI_Wtime();
 		req_cnt = 0;
 		ss = nprocs - ii < bblock2 ? nprocs - ii : bblock2;
 
@@ -170,6 +179,8 @@ int twolayer_communicator_linear_s2(int n, int bblock1, int bblock2, char *sendb
 
 		mpi_errno = MPI_Waitall(req_cnt, req, stat);
 		if (mpi_errno != MPI_SUCCESS) {return -1;}
+		et = MPI_Wtime();
+		iteration_time[ii] = et - st;
 	}
 
 	free(req);

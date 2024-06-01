@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     	std::cout << "ERROR: MPI_Comm_rank error\n" << std::endl;
 
     if (argc < 4) {
-    	std::cout << "Usage: mpirun -n <nprocs> " << argv[0] << " <loop-count> <ncores-per-node> <sblock> <base-list> " << std::endl;
+    	std::cout << "Usage: mpirun -n <nprocs> " << argv[0] << " <loop-count> <ncores-per-node> <base-list> " << std::endl;
     	return -1;
     }
 
@@ -110,8 +110,9 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		for (int b1 = 1; b1 <= ncores; b1 *= 2){
-			for (int b2 = 1; b2 <= nprocs - ncores; b2 *= 2){
+//		for (int b1 = 1; b1 <= ncores; b1 *= 2){
+//			for (int b2 = 1; b2 <= nprocs - ncores; b2 *= 2){
+		int b1 = 1, b2 = 1;
 				for (int it = 0; it < loopcount; it++) {
 					double st = MPI_Wtime();
 					mpi_errno = twolayer_communicator_linear_s2(ncores, b1, b2, (char*)send_buffer, sendcounts, sdispls,
@@ -133,12 +134,22 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 					if (warmup == 0) {
 						double max_time = 0;
 						MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-						if (total_time == max_time)
-							std::cout << "[TLLiner_S2] " << nprocs << " " << n  << " " << b1 << " " << b2 << " " << max_time << std::endl;
+						if (total_time == max_time) {
+							std::cout << "[TLLiner_S2] " << nprocs << " " << n << " " << ncores << " "
+									<< b1 << " " << b2 << " " << max_time << " " << intra_time << " [";
+
+							for (int i = 0; i < nprocs; i++) {
+								std::cout << iteration_time[i] << ", ";
+							}
+
+							std::cout << " ]" << std::endl;
+						}
 					}
+
+					free(iteration_time);
 				}
-			}
-		}
+//			}
+//		}
 //
 //		if (rank == 6) {
 //			index = 0;

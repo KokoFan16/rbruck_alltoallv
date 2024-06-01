@@ -14,6 +14,9 @@ extern double init_time, findMax_time, rotateIndex_time, alcCopy_time,
 getBlock_time, prepData_time, excgMeta_time, excgData_time, replace_time,
 orgData_time, prepSP_time, SP_time;
 
+extern double intra_time;
+extern double* iteration_time;
+
 int myPow(int x, unsigned int p);
 std::vector<int> convert10tob(int w, int N, int b);
 int check_errors(int *recvcounts, long long *recv_buffer, int rank, int nprocs);
@@ -72,5 +75,8 @@ int twolayer_communicator_linear_s3(int n, int bblock1, int bblock2, char *sendb
 
 int twolayer_communicator_linear_s4(int block, int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+
+int ML_benchmark(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf,
+		   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 #endif /* SRC_RBRUCKV_H_ */
