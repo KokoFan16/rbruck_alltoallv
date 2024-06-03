@@ -15,6 +15,7 @@ add_executable(TLLiner_S2 ./twophaseLayer_example4.cpp)
 add_executable(FFT ./FFT_distribution.cpp)
 add_executable(otherDis ./other_distributions.cpp)
 add_executable(balance ./balanced_benchmark.cpp)
+add_executable(gather ./gather_benchmark.cpp)
 
 
 
@@ -31,3 +32,4 @@ target_link_libraries(FFT rbruckvLib)
 target_link_libraries(otherDis rbruckvLib)
 
 target_link_libraries(balance rbruckvLib)
+target_link_libraries(gather rbruckvLib)
