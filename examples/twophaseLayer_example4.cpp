@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     	bases.push_back(atoi(argv[i]));
 
 //     warm-up only
-//    run_rbruckv(5, ncores, nprocs, bases, 1);
+    run_rbruckv(5, ncores, nprocs, bases, 1);
 
     // actual running
     run_rbruckv(loopCount, ncores, nprocs, bases, 0);
@@ -110,12 +110,34 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
+
+		for (int it = 0; it < loopcount; it++) {
+			double st = MPI_Wtime();
+			mpi_errno = MPICH_intra_scattered(nprocs, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+			double et = MPI_Wtime();
+			double total_time = et - st;
+
+			if (mpi_errno != MPI_SUCCESS)
+				std::cout << "Spreadout fail!" <<std::endl;
+
+
+			if (warmup == 0) {
+				double max_time = 0;
+				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+				if (total_time == max_time)
+					std::cout << "[Spreadout] " << nprocs << " " << n << " "<<  max_time << std::endl;
+			}
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
 //		for (int b1 = 1; b1 <= ncores; b1 *= 2){
 //			for (int b2 = 1; b2 <= nprocs - ncores; b2 *= 2){
-		int b1 = 1, b2 = 1;
+		for (int nc = 32; nc < nprocs; nc *= 2) {
+				int b1 = 1, b2 = 1;
 				for (int it = 0; it < loopcount; it++) {
 					double st = MPI_Wtime();
-					mpi_errno = twolayer_communicator_linear_s2(ncores, b1, b2, (char*)send_buffer, sendcounts, sdispls,
+					mpi_errno = twolayer_communicator_linear_s2(nc, b1, b2, (char*)send_buffer, sendcounts, sdispls,
 							MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls,
 							MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
 					double et = MPI_Wtime();
@@ -148,7 +170,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 					free(iteration_time);
 				}
-//			}
+			}
 //		}
 //
 //		if (rank == 6) {
