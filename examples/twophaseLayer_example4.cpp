@@ -133,7 +133,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 
 //		for (int b1 = 1; b1 <= ncores; b1 *= 2){
 //			for (int b2 = 1; b2 <= nprocs - ncores; b2 *= 2){
-		for (int nc = 32; nc < nprocs; nc *= 2) {
+		for (int nc = 1; nc < nprocs; nc *= 2) {
 				int b1 = 1, b2 = 1;
 				for (int it = 0; it < loopcount; it++) {
 					double st = MPI_Wtime();
@@ -157,7 +157,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 						double max_time = 0;
 						MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 						if (total_time == max_time) {
-							std::cout << "[TLLiner_S2] " << nprocs << " " << n << " " << ncores << " "
+							std::cout << "[TLLiner_S2] " << nprocs << " " << n << " " << nc << " "
 									<< b1 << " " << b2 << " " << max_time << " " << intra_time << " [";
 
 							for (int i = 0; i < nprocs; i++) {
