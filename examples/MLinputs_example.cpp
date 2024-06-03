@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
 //    run(10, ncores, bases, 1, sendsarray, recvcounts);
 //
-//    run(loopCount, ncores, bases, 0, bblock, sendsarray, recvcounts);
+    run(loopCount, ncores, bases, 0, bblock, sendsarray, recvcounts);
 //
 
     MPI_Finalize();
@@ -116,26 +116,6 @@ int run(int loopcount, int ncores, std::vector<int> bases, int warmup, int b, st
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-
-	for (int i = 0; i < basecount; i++) {
-		for (int it=0; it < loopcount; it++) {
-
-			double start = MPI_Wtime();
-			TTPL_BT_alltoallv_s1(ncores, bases[i], b, (char*)sendbuf, sendsarray.data(), sdispls, MPI_CHAR, (char*)recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
-			double end = MPI_Wtime();
-			double comm_time = (end - start);
-
-			if (warmup == 0) {
-				double max_time = 0;
-				MPI_Allreduce(&comm_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-				if (max_time == comm_time)
-					std::cout << "LTRNA_S2, " << nprocs << " " << b << " " << bases[i] << ""  << comm_time << " " << send_tsize << " " <<  recv_tsize << std::endl;
-			}
-		}
-	}
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
     free(sendbuf);
     free(recvbuf);
 
@@ -150,22 +130,22 @@ void readinputs(int rank, std::string filename, std::vector<int> &sendsarray, st
 
     while (std::getline(file, str)) {
 
-//    	std::string sitem = getNItem(str, count, " ", 0);
-    	std::cout << str << std::endl;
+    	std::string sitem = getNItem(str, count, " ", 0);
+//    	std::cout << str << std::endl;
 
-//    	for (int i = 0; i < 512; i++) {
-//    		std::string item = getNItem(str, i, " ", 0);
-//    		recvcounts.push_back(stol(item));
-//    	}
+    	for (int i = 0; i < 512; i++) {
+    		std::string item = getNItem(str, i, " ", 0);
+    		recvcounts.push_back(stol(item));
+    	}
 
-//    	std::string item = getNItem(str, rank, " ", 0);
-//    	recvcounts.push_back(stol(item));
-//
-//    	if (rank == count) {
-//    		std::stringstream ss(str);
-//    		std::string number;
-//    		while (ss >> number) sendsarray.push_back(stol(number));
-//    	}
+    	std::string item = getNItem(str, rank, " ", 0);
+    	recvcounts.push_back(stol(item));
+
+    	if (rank == count) {
+    		std::stringstream ss(str);
+    		std::string number;
+    		while (ss >> number) sendsarray.push_back(stol(number));
+    	}
         count++;
     }
 }
