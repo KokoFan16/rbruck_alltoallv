@@ -133,7 +133,7 @@ int twolayer_communicator_linear_s2(int n, int bblock1, int bblock2, char *sendb
     ngroup = ceil(nprocs / float(n)); // number of groups
 
 
-    int max_comm = nprocs - n;
+    int max_comm = nprocs;
     if (bblock2 <= 0 || bblock2 > max_comm) bblock2 = max_comm;
     int req_cnt = 0, ss = 0;
 

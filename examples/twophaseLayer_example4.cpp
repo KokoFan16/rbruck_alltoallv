@@ -134,7 +134,7 @@ static void run_rbruckv(int loopcount, int ncores, int nprocs, std::vector<int> 
 //		for (int b1 = 1; b1 <= ncores; b1 *= 2){
 //			for (int b2 = 1; b2 <= nprocs - ncores; b2 *= 2){
 		for (int nc = 32; nc < nprocs; nc *= 2) {
-				int b1 = 1, b2 = 1;
+				int b1 = nc, b2 = nprocs;
 				for (int it = 0; it < loopcount; it++) {
 					double st = MPI_Wtime();
 					mpi_errno = twolayer_communicator_linear_s2(nc, b1, b2, (char*)send_buffer, sendcounts, sdispls,
