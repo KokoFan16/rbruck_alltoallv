@@ -79,28 +79,28 @@ int run(int loopcount, int ncores, std::vector<int> bases, int warmup, int b, st
     MPI_Barrier(MPI_COMM_WORLD);
 
 
-    if (rank == 0)
-    	std::cout << send_tsize << " " << recv_tsize << std::endl;
+//    if (rank == 0)
+//    	std::cout << send_tsize << " " << recv_tsize << std::endl;
 
 
-//    for (int t = 0; t < loopcount; t++) {
-//
-//    	double start = MPI_Wtime();
-//    	MPI_Alltoallv(sendbuf, sendsarray.data(), sdispls, MPI_CHAR, recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
-//    	double end = MPI_Wtime();
-//    	double comm_time = (end - start);
-//
-//        if (rank == 0)
-//        	std::cout << comm_time << std::endl;
-//
-//
-//    	if (warmup == 0) {
-//			double max_time = 0;
-//			MPI_Allreduce(&comm_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-//			if (max_time == comm_time)
-//				std::cout << "MPI_Alltoallv, " << nprocs << " " << comm_time << " " << send_tsize << " " <<  recv_tsize << std::endl;
-//    	}
-//    }
+    for (int t = 0; t < loopcount; t++) {
+
+    	double start = MPI_Wtime();
+    	MPI_Alltoallv(sendbuf, sendsarray.data(), sdispls, MPI_CHAR, recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
+    	double end = MPI_Wtime();
+    	double comm_time = (end - start);
+
+        if (rank == 0)
+        	std::cout << comm_time << std::endl;
+
+
+    	if (warmup == 0) {
+			double max_time = 0;
+			MPI_Allreduce(&comm_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+			if (max_time == comm_time)
+				std::cout << "MPI_Alltoallv, " << nprocs << " " << comm_time << " " << send_tsize << " " <<  recv_tsize << std::endl;
+    	}
+    }
 
 //	MPI_Barrier(MPI_COMM_WORLD);
 //
