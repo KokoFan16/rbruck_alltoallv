@@ -79,12 +79,21 @@ int run(int loopcount, int ncores, std::vector<int> bases, int warmup, int b, st
     MPI_Barrier(MPI_COMM_WORLD);
 
 
+    if (rank == 0)
+    	std::cout << send_tsize << " " << loopcount << std::endl;
+
+
     for (int t = 0; t < loopcount; t++) {
 
     	double start = MPI_Wtime();
     	MPI_Alltoallv(sendbuf, sendsarray.data(), sdispls, MPI_CHAR, recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
     	double end = MPI_Wtime();
     	double comm_time = (end - start);
+
+
+        if (rank == 0)
+        	std::cout << comm_time << std::endl;
+
 
     	if (warmup == 0) {
 			double max_time = 0;
@@ -101,7 +110,7 @@ int run(int loopcount, int ncores, std::vector<int> bases, int warmup, int b, st
 		for (int it=0; it < loopcount; it++) {
 
 			double start = MPI_Wtime();
-			TTPL_BT_alltoallv(ncores, bases[i], b, (char*)sendbuf, sendsarray.data(), sdispls, MPI_CHAR, (char*)recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
+			twophase_rbruck_alltoallv(bases[i], (char*)sendbuf, sendsarray.data(), sdispls, MPI_CHAR, (char*)recvbuf, recvcounts.data(), rdispls, MPI_CHAR, MPI_COMM_WORLD);
 			double end = MPI_Wtime();
 			double comm_time = (end - start);
 
@@ -131,7 +140,6 @@ void readinputs(int rank, std::string filename, std::vector<int> &sendsarray, st
     while (std::getline(file, str)) {
 
     	std::string sitem = getNItem(str, count, " ", 0);
-//    	std::cout << str << std::endl;
 
     	for (int i = 0; i < 512; i++) {
     		std::string item = getNItem(str, i, " ", 0);
