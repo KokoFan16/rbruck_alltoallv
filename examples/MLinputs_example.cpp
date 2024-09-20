@@ -89,6 +89,9 @@ int run(int loopcount, std::vector<int> bases, int warmup, int sendcounts[], int
 	for (int i = 0; i < basecount; i++) {
 		for (int it=0; it < loopcount; it++) {
 
+			if (rank == 0) {
+				std::cout << i << " " << it << " twophase_rbruck_alltoallv" << std::endl;
+			}
 			double start = MPI_Wtime();
 			twophase_rbruck_alltoallv(bases[i], (char*)sendbuf, sendcounts, sdispls, MPI_CHAR, (char*)recvbuf, recvcounts, rdispls, MPI_CHAR, MPI_COMM_WORLD);
 			double end = MPI_Wtime();
