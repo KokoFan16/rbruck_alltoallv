@@ -58,7 +58,6 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 		for (int i=0; i < nprocs; i++) {
 			int random = rand() % 100;
 			sendcounts[i] = (n * random) / 100;
-//			sendcounts[i] = rank + 1;
 		}
 
 		// Random shuffling the sendcounts array
@@ -97,7 +96,7 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 			for (int it=0; it < loopcount; it++) {
 
 				double st = MPI_Wtime();
-				mpi_errno = twophase_rbruck_alltoallv_om(bases[i], (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+				mpi_errno = twophase_rbruck_alltoallv(bases[i], (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
 				double et = MPI_Wtime();
 				double total_time = et - st;
 
@@ -119,6 +118,39 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 					if (total_time == max_time) {
 
 						std::cout << "[Rbruckv] " << nprocs << ", " << n << ", " << bases[i] << ", " << max_time << std::endl;
+					}
+				}
+			}
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		for (int i = 0; i < basecount; i++) {
+			for (int it=0; it < loopcount; it++) {
+
+				double st = MPI_Wtime();
+				mpi_errno = twophase_rbruck_alltoallv_om(bases[i], (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+				double et = MPI_Wtime();
+				double total_time = et - st;
+
+				if (mpi_errno != MPI_SUCCESS)
+					std::cout << "twophase_rbruck_alltoallv fail!" <<std::endl;
+
+				// check correctness
+				int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+
+				if (error > 0) {
+					std::cout << "[Rbruckv-om] base " << bases[i] << " has errors" << std::endl;
+				}
+
+				if (warmup == 0) {
+					double max_time = 0;
+					MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+
+					if (total_time == max_time) {
+
+						std::cout << "[Rbruckv-om] " << nprocs << ", " << n << ", " << bases[i] << ", " << max_time << std::endl;
 //						double ttime = init_time + findMax_time + rotateIndex_time + alcCopy_time + getBlock_time
 //								+ prepData_time + excgMeta_time + excgData_time + replace_time;
 //
@@ -131,30 +163,23 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 			}
 		}
 
+		MPI_Barrier(MPI_COMM_WORLD);
 
-//		if (rank == 2) {
-//			for (int i = 0; i < roffset; i++) {
-//				std::cout << recv_buffer[i] << std::endl;
-//			}
-//		}
+		// MPI_alltoallv
+		for (int it = 0; it < loopcount; it++) {
+			double st = MPI_Wtime();
+			MPI_Alltoallv(send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+			double et = MPI_Wtime();
+			double total_time = et - st;
 
-//		MPI_Barrier(MPI_COMM_WORLD);
-//
-//		// MPI_alltoallv
-//		for (int it = 0; it < loopcount; it++) {
-//			double st = MPI_Wtime();
-//			MPI_Alltoallv(send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-//			double et = MPI_Wtime();
-//			double total_time = et - st;
-//
-//			if (warmup == 0) {
-//				double max_time = 0;
-//				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-//				if (total_time == max_time)
-//					std::cout << "[MPIAlltoallv] " << nprocs << " " << n << " "<<  max_time << std::endl;
-//			}
-//		}
-//		MPI_Barrier(MPI_COMM_WORLD);
+			if (warmup == 0) {
+				double max_time = 0;
+				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+				if (total_time == max_time)
+					std::cout << "[MPIAlltoallv] " << nprocs << " " << n << " "<<  max_time << std::endl;
+			}
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
 
 		delete[] send_buffer;
 		delete[] recv_buffer;
