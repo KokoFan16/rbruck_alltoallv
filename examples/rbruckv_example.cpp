@@ -46,7 +46,7 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 	int mpi_errno = MPI_SUCCESS;
 	int basecount = bases.size();
-	for (int n = 4; n <= 4; n = n * 2) {
+	for (int n = 2; n <= 4096; n = n * 2) {
 
 		int sendcounts[nprocs]; // the size of data each process send to other process
 		memset(sendcounts, 0, nprocs*sizeof(int));
