@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     	bases.push_back(atoi(argv[i]));
 
     // warm-up only
-//    run_rbruckv(5, nprocs, bases, 1);
+    run_rbruckv(1, nprocs, bases, 1);
 
     // actual running
     run_rbruckv(loopCount, nprocs, bases, 0);

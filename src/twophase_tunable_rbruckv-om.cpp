@@ -18,7 +18,7 @@ int twophase_rbruck_alltoallv_om (int r, char *sendbuf, int *sendcounts, int *sd
 
 	if ( r > nprocs ) { r = nprocs; }
 
-	int w, nlpow, d;
+	int w, nlpow, d, K;
 	int lgc, lc, rd;
 	int local_max_count=0, max_send_count=0;
 	int rotate_index_array[nprocs];
@@ -28,7 +28,8 @@ int twophase_rbruck_alltoallv_om (int r, char *sendbuf, int *sendcounts, int *sd
 	w = ceil(log(nprocs) / float(log(r))); // calculate the number of digits when using r-representation
 	nlpow = myPow(r, w-1); // maximum send number of elements
 	d = (myPow(r, w) - nprocs) / nlpow; // calculate the number of highest digits
-	int sendNcopy[nprocs - w - 1];
+	K = w * (r - 1) - d;
+	int sendNcopy[nprocs - K - 1];
 
 	// 1. Find max send count
 	for (int i = 0; i < nprocs; i++) {
@@ -42,7 +43,7 @@ int twophase_rbruck_alltoallv_om (int r, char *sendbuf, int *sendcounts, int *sd
 		rotate_index_array[i] = (2*rank-i+nprocs)%nprocs;
 
 	// 3. exchange data with log(P) steps
-	char* extra_buffer = (char*) malloc(max_send_count*typesize*(nprocs - w - 1));
+	char* extra_buffer = (char*) malloc(max_send_count*typesize*(nprocs - K - 1));
 
 	memcpy(&recvbuf[rdispls[rank]*typesize], &sendbuf[sdispls[rank]*typesize], recvcounts[rank]*typesize);
 
