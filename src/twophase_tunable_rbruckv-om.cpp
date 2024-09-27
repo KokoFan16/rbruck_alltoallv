@@ -19,7 +19,6 @@ int twophase_rbruck_alltoallv_om (int r, char *sendbuf, int *sendcounts, int *sd
 	if ( r > nprocs ) { r = nprocs; }
 
 	int w, nlpow, d, K;
-	int lgc, lc, rd;
 	int local_max_count=0, max_send_count=0;
 	int rotate_index_array[nprocs];
 
