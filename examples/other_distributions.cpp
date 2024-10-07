@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     int radix0 = atoi(argv[12]);
 
     // warm-up only
-//    run_rbruckv(10, ncores, nprocs, bblock1, radix1, bblock2, radix2, dist, mean, deviation, x, maxValue, 1);
+    run_rbruckv(10, ncores, nprocs, bblock1, radix1, bblock2, radix2, dist, mean, deviation, x, maxValue, radix0, 1);
 
     // actual running
     run_rbruckv(loopCount, ncores, nprocs, bblock1, radix1, bblock2, radix2, dist, mean, deviation, x, maxValue, radix0, 0);
