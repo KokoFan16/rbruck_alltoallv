@@ -83,4 +83,8 @@ int ML_benchmark(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype send
 int twophase_rbruck_alltoallv_om(int r, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
+
+void spreadout_alltoallv(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf,
+		   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+
 #endif /* SRC_RBRUCKV_H_ */
