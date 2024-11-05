@@ -40,6 +40,8 @@ int main(int argc, char **argv) {
         printf("ERROR: MPI_Comm_rank error\n");
 
 
+    run(10, csize, lsize, 1);
+
     run(loopCount, csize, lsize, 0);
 
     MPI_Finalize();
