@@ -10,4 +10,4 @@ add_executable(merge_benckmark ./merge_benchmark.cpp)
 add_executable(split_benchmark ./split_benchmark.cpp)
 
 target_link_libraries(split_benchmark rbruckvLib benchLib)
-target_link_libraries(merge_benckmark rbruckvLib)
+target_link_libraries(merge_benckmark rbruckvLib benchLib)

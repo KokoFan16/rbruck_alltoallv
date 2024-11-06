@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
         printf("ERROR: MPI_Comm_rank error\n");
 
 
-    run(10, csize, lsize, 1);
+//    run(10, csize, lsize, 1);
 
     run(loopCount, csize, lsize, 0);
 
@@ -55,7 +55,7 @@ int run(int loopcount, int csize, int lsize, int warmup) {
 
 	// Uniform random distribution
 	for (int i=0; i < nprocs; i++) { sendcounts[i] = csize; }
-	if (rank == 0) { sendcounts[1] = lsize; }
+	if (rank == 0) { sendcounts[nprocs - 1] = lsize; }
 
 	// Initial send offset array
 	for (int i = 0; i < nprocs; ++i) {
@@ -95,7 +95,6 @@ int run(int loopcount, int csize, int lsize, int warmup) {
     	local.rank = rank;
 
     	if (warmup == 0) {
-			double max_time = 0;
 			MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
 			if (rank == global.rank) {
@@ -151,26 +150,26 @@ void split_alltoallv(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype 
 	int typesize, div_size = 0, nreqs = 0;
 	MPI_Type_size(sendtype, &typesize);
 
-	if (rank == 0) { div_size = sendcounts[1] / nprocs; }
-	if (rank == 1) { div_size = recvcounts[0] / nprocs; }
+	if (rank == 0) { div_size = sendcounts[nprocs - 1] / nprocs; }
+	if (rank == nprocs - 1) { div_size = recvcounts[0] / nprocs; }
 
 	MPI_Request* req = (MPI_Request*)malloc(3*nprocs*sizeof(MPI_Request));
 	MPI_Status* stat = (MPI_Status*)malloc(3*nprocs*sizeof(MPI_Status));
 
 	for (int i = 0; i < nprocs; i++) {
 
-		if (rank == 1) {
+		if (rank == (nprocs - 1)) {
 			// Process 1 receives chunks from process 0 in each round
 			MPI_Irecv((char *)recvbuf + (rdispls[0] + i * div_size) * typesize,
 					  div_size, recvtype, 0, 0, comm, &req[nreqs++]);
 		}
 
-		if (rank == 1 && i != 0) {
+		if (rank == (nprocs - 1) && i != 0) {
 			// Process 1 receives from all ranks except process 0
 			MPI_Irecv((char *)recvbuf + rdispls[i] * typesize, recvcounts[i],
 					  recvtype, i, 0, comm, &req[nreqs++]);
 
-		} else if (rank != 1) {
+		} else if (rank != (nprocs - 1)) {
 			// All other processes communicate normally with all ranks
 			int src = (rank - i + nprocs) % nprocs;
 			MPI_Irecv((char *)recvbuf + rdispls[src] * typesize, recvcounts[src],
@@ -183,11 +182,11 @@ void split_alltoallv(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype 
 
 		// Process 0 sends chunks to process 1 in each round
 		if (rank == 0) {
-			MPI_Isend((char *)sendbuf + (sdispls[1] + i * div_size) * typesize,
-					  div_size, sendtype, 1, 0, comm, &req[nreqs++]);
+			MPI_Isend((char *)sendbuf + (sdispls[nprocs - 1] + i * div_size) * typesize,
+					  div_size, sendtype, nprocs - 1, 0, comm, &req[nreqs++]);
 		}
 
-		if (rank == 0 && i != 1) {
+		if (rank == 0 && i != (nprocs - 1)) {
 			// Process 0 sends to and receives from all ranks except process 1
 			MPI_Isend((char *)sendbuf + sdispls[i] * typesize, sendcounts[i],
 					  sendtype, i, 0, comm, &req[nreqs++]);
