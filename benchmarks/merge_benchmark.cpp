@@ -293,7 +293,8 @@ void merge_alltoallv(int ncores, char *sendbuf, int *sendcounts, int *sdispls, M
 		}
 	}
 	MPI_Waitall(nreq, req, stat);
-
+	free(req);
+	free(stat);
 
 	// orange data
 	if (local_rank == 1) {
@@ -308,26 +309,17 @@ void merge_alltoallv(int ncores, char *sendbuf, int *sendcounts, int *sdispls, M
 		}
 	}
 
-//	nreq = 0;
-//    if (local_rank != 0 & local_rank != 1) {
-//		MPI_Irecv(recvbuf, total_recv, recvtype, 1, 0, group_comm, &req[nreq++]);
-////    	MPI_Recv(recvbuf, total_recv, recvtype, 1, 0, group_comm, MPI_STATUS_IGNORE);
+//    if (local_rank != 0) {
+//        MPI_Recv(recvbuf, total_recv, recvtype, 1, 0, group_comm, MPI_STATUS_IGNORE);
 //    }
 //
 //    if (local_rank == 1) {
-//
-//    	MPI_Request send_request;
-//    	for (int i = 2; i < (ncores - 1); i++) {
-////    		MPI_Send(gather_buffer + (i - 1) * total_recv * typesize, total_recv, sendtype, i, 0, group_comm);
-//    		MPI_Isend(gather_buffer + (i - 1) * total_recv * typesize, total_recv, sendtype, i, 0, group_comm, &send_request);
-//    		MPI_Wait(&send_request, MPI_STATUS_IGNORE);
-//    	}
+//        MPI_Request send_request;
+//        for (int i = 1; i < ncores - 1; i++) {
+//            MPI_Isend(gather_buffer + (i - 1) * total_recv * typesize, total_recv, sendtype, i, 0, group_comm, &send_request);
+//            MPI_Wait(&send_request, MPI_STATUS_IGNORE);
+//        }
 //    }
-//    if (local_rank != 0 ) {
-//    	MPI_Waitall(nreq, req, stat);
-//    }
-	free(req);
-	free(stat);
 
 
     // Clean up and free allocated memory
