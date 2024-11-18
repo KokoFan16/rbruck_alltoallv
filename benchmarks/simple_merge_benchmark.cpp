@@ -19,7 +19,7 @@ struct {
     int rank;
 } local, global;
 
-double other_time = 0, gather_time = 0, ata_time = 0, scatter_time = 0;
+double other_time = 0, split_time = 0, gather_time = 0, ata_time = 0, scatter_time = 0;
 
 int main(int argc, char **argv) {
 
@@ -111,14 +111,10 @@ int run(int loopcount, int ncores, int csize, int lsize, int warmup) {
 
     for (int t = 0; t < loopcount; t++) {
 
-//    	std::cout << rank << " simply_merge_alltoallv " << std::endl;
-
     	simply_merge_alltoallv(ncores, (char*)send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG,
     			(char*)recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
 
-    	double total_time = other_time + gather_time + ata_time + scatter_time;
-
-//    	std::cout << rank << " " << total_time << std::endl;
+    	double total_time = other_time + split_time + gather_time + ata_time + scatter_time;
 
     	if (warmup == 0) {
     		double max_time = 0;
@@ -126,7 +122,7 @@ int run(int loopcount, int ncores, int csize, int lsize, int warmup) {
 
 			if (total_time == max_time) {
 				std::cout << "simply_merge " << nprocs << " " << rank << " "
-						<< max_time << " " << other_time << " " << gather_time << " " << ata_time
+						<< max_time << " " << other_time << " " << split_time << " "<< gather_time << " " << ata_time
 						<< " " << scatter_time << " " << csize << " " << lsize << std::endl;
 			}
     	}
@@ -150,23 +146,28 @@ void simply_merge_alltoallv(int ncores, char *sendbuf, int *sendcounts, int *sdi
     int typesize;
     MPI_Type_size(sendtype, &typesize);
 
-    int group_id, ngroup, local_rank, group_leader;
+    int group_id, local_rank;
     MPI_Comm group_comm, leader_comm;
 
     // Calculate the number of groups
-    ngroup = nprocs / ncores;
     group_id = rank / ncores;
 
+    int total_send = sendcounts[0] * nprocs * typesize;
+    double end = MPI_Wtime();
+    other_time = end - start;
+
+
+    start = MPI_Wtime();
     // Split communicator based on color to form groups
     MPI_Comm_split(MPI_COMM_WORLD, group_id, rank, &group_comm);
 
     // Get local rank and size within the group
     MPI_Comm_rank(group_comm, &local_rank);
-    group_leader = group_id * ncores;
 
-    int total_send = sendcounts[0] * nprocs * typesize;
-    double end = MPI_Wtime();
-    other_time = end - start;
+	// Create a communicator for group leaders
+	MPI_Comm_split(MPI_COMM_WORLD, (local_rank == 0) ? 0 : MPI_UNDEFINED, rank, &leader_comm);
+	end = MPI_Wtime();
+	split_time = end - start;
 
     // Gather data at the group leader
     start = MPI_Wtime();
@@ -181,21 +182,21 @@ void simply_merge_alltoallv(int ncores, char *sendbuf, int *sendcounts, int *sdi
     gather_time = end - start;
 
     start = MPI_Wtime();
-	// Create a communicator for group leaders
-	MPI_Comm_split(MPI_COMM_WORLD, (local_rank == 0) ? 0 : MPI_UNDEFINED, rank, &leader_comm);
 
 	// Perform all-to-all among group leaders
 	if (local_rank == 0) {
 		MPI_Alltoall(gathered_data, ncores * ncores * sendcounts[0] * typesize, MPI_CHAR, all_to_all_data, ncores * ncores * sendcounts[0] * typesize, MPI_CHAR, leader_comm);
 	}
+
+	if (local_rank == 0) {
+		MPI_Comm_free(&leader_comm);
+	}
     end = MPI_Wtime();
     ata_time = end - start;
 
     start = MPI_Wtime();
-	if (local_rank == 0) {
-		MPI_Scatter(all_to_all_data, total_send, MPI_CHAR,
+	MPI_Scatter(all_to_all_data, total_send, MPI_CHAR,
 				recvbuf, total_send, MPI_CHAR, 0, group_comm);
-	}
 
 	// Clean up
 	if (local_rank == 0) {
@@ -203,9 +204,7 @@ void simply_merge_alltoallv(int ncores, char *sendbuf, int *sendcounts, int *sdi
 		free(all_to_all_data);
 	}
 	MPI_Comm_free(&group_comm);
-	if (local_rank == 0) {
-		MPI_Comm_free(&leader_comm);
-	}
+
     end = MPI_Wtime();
     scatter_time = end - start;
 }
