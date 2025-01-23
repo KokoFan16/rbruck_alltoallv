@@ -18,6 +18,7 @@ int tuna_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls, 
 	MPI_Type_size(sendtype, &typesize);
 
 	if ( r > nprocs - 1 ) { r = nprocs - 1; }
+	if (b <= 0 || b > nprocs) b = nprocs;
 
 	int w, max_rank, nlpow, d, K, i, num_reqs;
 	int local_max_count=0, max_send_count=0;
@@ -51,115 +52,118 @@ int tuna_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls, 
 
 	int sent_blocks[nlpow];
 	int spoint = 1, distance = 1, next_distance = distance*r;
-	int nc, rem, ns, ze;
+	int nc, rem, ns, ze, ss;
 
-	MPI_Request* reqs = (MPI_Request *) malloc(2 * (r - 1) * sizeof(MPI_Request));
+	MPI_Request* reqs = (MPI_Request *) malloc(2 * b * sizeof(MPI_Request));
+
 	for (int x = 0; x < w; x++) {
-		num_reqs = 0;
 		ze = (x == w - 1)? r - d: r;
-		for (int z = 1; z < ze; z++) {
-			// 1) get the sent data-blocks
-			spoint = z * distance;
-			nc = nprocs / next_distance * distance, rem = nprocs % next_distance - spoint;
-			if (rem < 0) { rem = 0; }
-			ns = (rem > distance)? (nc + distance) : (nc + rem);
+		for (int z = 1; z < ze; z += b) {
+			num_reqs = 0;
+			ss = ze - z < b ? ze - z : b;
+			for (i = 0; i < ss; i++) {
 
-			int recvrank = (rank + spoint) % nprocs; // receive data from rank - 2^step process
-			int sendrank = (rank - spoint + nprocs) % nprocs; // send data from rank + 2^k process
+				spoint = (z + i) * distance;
+				nc = nprocs / next_distance * distance, rem = nprocs % next_distance - spoint;
+				if (rem < 0) { rem = 0; }
+				ns = (rem > distance)? (nc + distance) : (nc + rem);
 
-			if (ns == 1) {
-                MPI_Irecv(&recvbuf[rdispls[recvrank]*typesize], recvcounts[recvrank]*typesize, MPI_CHAR, recvrank, 1, comm, &reqs[num_reqs++]);
+				int recvrank = (rank + spoint) % nprocs;
+				int sendrank = (rank - spoint + nprocs) % nprocs; // send data from rank + 2^k process
 
-                MPI_Isend(&sendbuf[sdispls[sendrank]*typesize], sendcounts[sendrank]*typesize, MPI_CHAR, sendrank, 1, comm, &reqs[num_reqs++]);
+				if (ns == 1) {
+					MPI_Irecv(&recvbuf[rdispls[recvrank]*typesize], recvcounts[recvrank]*typesize, MPI_CHAR, recvrank, 1, comm, &reqs[num_reqs++]);
+
+					MPI_Isend(&sendbuf[sdispls[sendrank]*typesize], sendcounts[sendrank]*typesize, MPI_CHAR, sendrank, 1, comm, &reqs[num_reqs++]);
+				}
+				else {
+					int di = 0;
+					int extra_ids[ns];
+					for (int i = spoint; i < nprocs; i += next_distance) {
+						int j_end = (i+distance > nprocs)? nprocs: i+distance;
+						for (int j = i; j < j_end; j++) {
+							int dx = log(j) / (float)log(r);
+							int ls_id = myPow(r, dx);
+							int dz = j / (float) ls_id;
+							int extra_id = j - r - (dx - 1)*(r-1) - dz;
+							extra_ids[di] = extra_id;
+							int id = (j + rank) % nprocs;
+							sent_blocks[di] = id;
+							di++;
+						}
+					}
+
+					// 2) prepare metadata
+					int metadata_send[di];
+					int sendCount = 0, offset = 0;
+					for (int i = 0; i < di; i++) {
+						int send_index = rotate_index_array[sent_blocks[i]];
+						if (i % distance == 0) {
+							metadata_send[i] = sendcounts[send_index];
+						}
+						else {
+							metadata_send[i] = sendNcopy[extra_ids[i]];
+						}
+						offset += metadata_send[i] * typesize;
+					}
+
+					int metadata_recv[di];
+					MPI_Sendrecv(metadata_send, di, MPI_INT, sendrank, 0, metadata_recv, di, MPI_INT, recvrank, 0, comm, MPI_STATUS_IGNORE);
+
+					for(int i = 0; i < di; i++) { sendCount += metadata_recv[i]; }
+
+					// prepare send and recv buffer
+					char* temp_recv_buffer = (char*) malloc(sendCount*typesize);
+					char* temp_send_buffer = (char*) malloc(offset);
+
+					// prepare send data
+					offset = 0;
+					for (int i = 0; i < di; i++) {
+						int send_index = rotate_index_array[sent_blocks[i]];
+						int size = 0;
+
+						if (i % distance == 0) {
+							size = sendcounts[send_index]*typesize;
+							memcpy(&temp_send_buffer[offset], &sendbuf[sdispls[send_index]*typesize], size);
+						}
+						else {
+							size = sendNcopy[extra_ids[i]]*typesize;
+							memcpy(&temp_send_buffer[offset], &extra_buffer[extra_ids[i]*max_send_count*typesize], size);
+						}
+						offset += size;
+					}
+
+					// 4) exchange data
+					MPI_Sendrecv(temp_send_buffer, offset, MPI_CHAR, sendrank, 1, temp_recv_buffer, sendCount*typesize, MPI_CHAR, recvrank, 1, comm, MPI_STATUS_IGNORE);
+
+					// 5) replaces
+					offset = 0;
+					for (int i = 0; i < di; i++) {
+						int size = metadata_recv[i]*typesize;
+
+						if (i < distance) {
+							memcpy(&recvbuf[rdispls[sent_blocks[i]]*typesize], &temp_recv_buffer[offset], size);
+						}
+						else {
+							memcpy(&extra_buffer[extra_ids[i]*max_send_count*typesize], &temp_recv_buffer[offset], size);
+							sendNcopy[extra_ids[i]] = metadata_recv[i];
+						}
+						offset += size;
+					}
+					free(temp_send_buffer);
+					free(temp_recv_buffer);
+				}
 			}
-			else {
-				int di = 0;
-				int extra_ids[ns];
-				for (int i = spoint; i < nprocs; i += next_distance) {
-					int j_end = (i+distance > nprocs)? nprocs: i+distance;
-					for (int j = i; j < j_end; j++) {
-						int dx = log(j) / (float)log(r);
-						int ls_id = myPow(r, dx);
-						int dz = j / (float) ls_id;
-						int extra_id = j - r - (dx - 1)*(r-1) - dz;
-						extra_ids[di] = extra_id;
-						int id = (j + rank) % nprocs;
-						sent_blocks[di] = id;
-						di++;
-					}
-				}
-
-				// 2) prepare metadata
-				int metadata_send[di];
-				int sendCount = 0, offset = 0;
-				for (int i = 0; i < di; i++) {
-					int send_index = rotate_index_array[sent_blocks[i]];
-					if (i % distance == 0) {
-						metadata_send[i] = sendcounts[send_index];
-					}
-					else {
-						metadata_send[i] = sendNcopy[extra_ids[i]];
-					}
-					offset += metadata_send[i] * typesize;
-				}
-
-				int metadata_recv[di];
-				MPI_Sendrecv(metadata_send, di, MPI_INT, sendrank, 0, metadata_recv, di, MPI_INT, recvrank, 0, comm, MPI_STATUS_IGNORE);
-
-				for(int i = 0; i < di; i++) { sendCount += metadata_recv[i]; }
-
-				// prepare send and recv buffer
-				char* temp_recv_buffer = (char*) malloc(sendCount*typesize);
-				char* temp_send_buffer = (char*) malloc(offset);
-
-				// prepare send data
-				offset = 0;
-				for (int i = 0; i < di; i++) {
-					int send_index = rotate_index_array[sent_blocks[i]];
-					int size = 0;
-
-					if (i % distance == 0) {
-						size = sendcounts[send_index]*typesize;
-						memcpy(&temp_send_buffer[offset], &sendbuf[sdispls[send_index]*typesize], size);
-					}
-					else {
-						size = sendNcopy[extra_ids[i]]*typesize;
-						memcpy(&temp_send_buffer[offset], &extra_buffer[extra_ids[i]*max_send_count*typesize], size);
-					}
-					offset += size;
-				}
-
-				// 4) exchange data
-				MPI_Sendrecv(temp_send_buffer, offset, MPI_CHAR, sendrank, 1, temp_recv_buffer, sendCount*typesize, MPI_CHAR, recvrank, 1, comm, MPI_STATUS_IGNORE);
-
-				// 5) replaces
-				offset = 0;
-				for (int i = 0; i < di; i++) {
-					int size = metadata_recv[i]*typesize;
-
-					if (i < distance) {
-						memcpy(&recvbuf[rdispls[sent_blocks[i]]*typesize], &temp_recv_buffer[offset], size);
-					}
-					else {
-						memcpy(&extra_buffer[extra_ids[i]*max_send_count*typesize], &temp_recv_buffer[offset], size);
-						sendNcopy[extra_ids[i]] = metadata_recv[i];
-					}
-					offset += size;
-				}
-				free(temp_send_buffer);
-				free(temp_recv_buffer);
-			}
+			MPI_Waitall(num_reqs, reqs, MPI_STATUSES_IGNORE);
 		}
-
-		MPI_Waitall(num_reqs, reqs, MPI_STATUSES_IGNORE);
 
 		distance *= r;
 		next_distance *= r;
 	}
-	free(reqs);
 	if (K < nprocs - 1) {
 		free(extra_buffer);
 	}
+	free(reqs);
 
 	return 0;
 }
