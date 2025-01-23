@@ -73,8 +73,9 @@ int twolayer_communicator_linear_s2(int n, int bblock1, int bblock2, char *sendb
 int twolayer_communicator_linear_s3(int n, int bblock1, int bblock2, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
-int twolayer_communicator_linear_s4(int block, int n, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
-		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+int twolayer_communicator_linear_s4(int n, int bblock1, int bblock2, char *sendbuf,
+		int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf,
+		int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 int ML_benchmark(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf,
 		   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
@@ -86,5 +87,9 @@ int twophase_rbruck_alltoallv_om(int r, char *sendbuf, int *sendcounts, int *sdi
 
 void spreadout_alltoallv(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, char *recvbuf,
 		   int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+
+
+int tuna_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
+		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
 #endif /* SRC_RBRUCKV_H_ */
