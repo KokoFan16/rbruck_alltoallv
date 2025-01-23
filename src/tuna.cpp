@@ -76,23 +76,19 @@ int tuna_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls, 
 			else {
 
 				int di = 0;
-
+				int extra_ids[ns];
 				for (int i = spoint; i < nprocs; i += next_distance) {
 					int j_end = (i+distance > nprocs)? nprocs: i+distance;
 					for (int j = i; j < j_end; j++) {
+						int dx = log(j) / (float)log(r);
+						int ls_id = myPow(r, dx);
+						int dz = j / (float) ls_id;
+						int extra_id = j - r - (dx - 1)*(r-1) - dz;
+						extra_ids[di] = extra_id;
 						int id = (j + rank) % nprocs;
-						sent_blocks[di++] = id;
+						sent_blocks[di] = id;
+						di++;
 					}
-				}
-
-				int extra_ids[di];
-				for (int i = 0; i < di; i++) {
-					int org_id = (sent_blocks[i] - rank + nprocs) % nprocs;
-					int logN = log(org_id) / (float)log(r);
-					int largest_small_id = myPow(r, logN);
-					int dz = org_id / (float) largest_small_id;
-					int extra_id = org_id - r - (logN - 1)*(r-1) - dz;
-					extra_ids[i] = extra_id;
 				}
 
 				// 2) prepare metadata
