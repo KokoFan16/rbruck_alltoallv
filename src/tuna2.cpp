@@ -172,23 +172,26 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 			MPI_Waitall(num_reqs, reqs, MPI_STATUSES_IGNORE);
 		}
 
-		// 5) replaces
+		// replaces
 		int offset = 0;
 		for (int i = 0; i < zc; i++) {
 			for (int j = 0; j < zns[i]; j++){
-				int size = metadata_recv[i][j]*typesize;
-				int o = (sent_blocks[i][j] - rank + nprocs) % nprocs - rem2;;
+				if (zns[i] > 1){
+					int size = metadata_recv[i][j]*typesize;
+					int o = (sent_blocks[i][j] - rank + nprocs) % nprocs - rem2;;
 
-				if (j < distance) {
-					memcpy(&recvbuf[rdispls[sent_blocks[i][j]]*typesize], &temp_recv_buffer[offset], size);
+					if (j < distance) {
+						memcpy(&recvbuf[rdispls[sent_blocks[i][j]]*typesize], &temp_recv_buffer[offset], size);
+					}
+					else {
+						memcpy(&extra_buffer[extra_ids[o]*max_send_count*typesize], &temp_recv_buffer[offset], size);
+						sendNcopy[extra_ids[o]] = metadata_recv[i][j];
+					}
+					offset += size;
 				}
-				else {
-					memcpy(&extra_buffer[extra_ids[o]*max_send_count*typesize], &temp_recv_buffer[offset], size);
-					sendNcopy[extra_ids[o]] = metadata_recv[i][j];
-				}
-				offset += size;
 			}
 		}
+
 		distance *= r;
 		next_distance *= r;
 	}
