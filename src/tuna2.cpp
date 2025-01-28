@@ -72,7 +72,8 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 	// copy data that need to be sent to each rank itself
 	memcpy(&recvbuf[rdispls[rank]*typesize], &sendbuf[sdispls[rank]*typesize], recvcounts[rank]*typesize);
 
-//	int sent_blocks[r-1][nlpow];
+	int sent_blocks[r-1][nlpow];
+	int metadata_recv[r-1][nlpow];
 	int nc, rem, ns, ze, ss;
 	spoint = 1, distance = 1, next_distance = distance*r;
 
@@ -85,8 +86,6 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 	for (int x = 0; x < w; x++) {
 		ze = (x == w - 1)? r - d: r;
 		int zoffset = 0, zc = ze-1;
-		int sent_blocks[zc][nlpow];
-		int metadata_recv[zc][nlpow];
 		int zns[zc];
 
 		for (int k = 1; k < ze; k += b) {
@@ -99,6 +98,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 				nc = nprocs / next_distance * distance, rem = nprocs % next_distance - spoint;
 				if (rem < 0) { rem = 0; }
 				ns = (rem > distance)? (nc + distance) : (nc + rem);
+				zns[z-1] = ns;
 
 				int recvrank = (rank + spoint) % nprocs;
 				int sendrank = (rank - spoint + nprocs) % nprocs; // send data from rank + 2^k process
@@ -117,7 +117,6 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 							sent_blocks[z-1][di++] = id;
 						}
 					}
-					zns[z-1] = di;
 
 					// 2) prepare metadata
 					int metadata_send[di];
@@ -189,8 +188,6 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 					offset += size;
 				}
 			}
-
-
 		}
 
 
