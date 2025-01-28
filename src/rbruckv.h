@@ -92,4 +92,8 @@ void spreadout_alltoallv(char *sendbuf, int *sendcounts, int *sdispls, MPI_Datat
 int tuna_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
 		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
 
+int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype,
+		char *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+
+
 #endif /* SRC_RBRUCKV_H_ */
