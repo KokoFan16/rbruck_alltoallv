@@ -163,6 +163,10 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 						offset += size;
 					}
 
+					if (rank == 0) {
+						std::cout << "MPI_Irecv " << zoffset << " " << sendCount*typesize << " " << offset << std::endl;
+					}
+
 
 					MPI_Irecv(&temp_recv_buffer[zoffset], sendCount*typesize, MPI_CHAR, recvrank, 1, comm, &reqs[num_reqs++]);
 
