@@ -190,9 +190,9 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 					int size = metadata_recv[i][j]*typesize;
 					int o = (sent_blocks[i][j] - rank + nprocs) % nprocs - rem2;
 
-//					if (rank == 0) {
-//						std::cout << "size " << x << " " << i << " " << j << " " << " " << rdispls[sent_blocks[i][j]]*typesize << " " << size << " " << offset << std::endl;
-//					}
+					if (rank == 0) {
+						std::cout << "size " << x << " " << i << " " << j << " " << " " << rdispls[sent_blocks[i][j]]*typesize << " " << size << " " << offset << std::endl;
+					}
 
 					if (j < distance) {
 						memcpy(&recvbuf[rdispls[sent_blocks[i][j]]*typesize], &temp_recv_buffer[offset], size);
