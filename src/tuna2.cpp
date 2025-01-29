@@ -77,7 +77,8 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 	int nc, rem, ns, ze, ss;
 	spoint = 1, distance = 1, next_distance = distance*r;
 
-	MPI_Request* reqs = (MPI_Request *) malloc(2 * b * sizeof(MPI_Request));
+//	MPI_Request* reqs = (MPI_Request *) malloc(2 * b * sizeof(MPI_Request));
+	MPI_Request* reqs = (MPI_Request *) malloc(2 * r * sizeof(MPI_Request));
     if (reqs == nullptr) {
         std::cerr << "MPI_Requests allocation failed!" << std::endl;
         return 1; // Exit program with error
@@ -87,13 +88,16 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 		ze = (x == w - 1)? r - d: r;
 		int zoffset = 0, zc = ze-1;
 		int zns[zc];
+		num_reqs = 0;
 
-		for (int k = 1; k < ze; k += b) {
-			num_reqs = 0;
-			ss = ze - k < b ? ze - k : b;
-			for (i = 0; i < ss; i++) {
+		for (int z = 1; z < ze; z++) {
 
-				int z = k + i;
+//		for (int k = 1; k < ze; k += b) {
+//			num_reqs = 0;
+//			ss = ze - k < b ? ze - k : b;
+//			for (i = 0; i < ss; i++) {
+
+//				int z = k + i;
 				spoint = z * distance;
 				nc = nprocs / next_distance * distance, rem = nprocs % next_distance - spoint;
 				if (rem < 0) { rem = 0; }
@@ -165,10 +169,14 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 					MPI_Isend(temp_send_buffer, offset, MPI_CHAR, sendrank, 1, comm, &reqs[num_reqs++]);
 
 					zoffset += sendCount*typesize;
-
+//
+//					if (rank == 0) {
+//						std::cout << "a " << x << " " << z << " " << zoffset << std::endl;
+//					}
+//
 					free(temp_send_buffer);
 				}
-			}
+//			}
 			MPI_Waitall(num_reqs, reqs, MPI_STATUSES_IGNORE);
 		}
 
@@ -176,9 +184,15 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 		int offset = 0;
 		for (int i = 0; i < zc; i++) {
 			for (int j = 0; j < zns[i]; j++){
+
+//				std::cout << i << " " << j << " " << zns[i] << std::endl;
 				if (zns[i] > 1){
 					int size = metadata_recv[i][j]*typesize;
-					int o = (sent_blocks[i][j] - rank + nprocs) % nprocs - rem2;;
+					int o = (sent_blocks[i][j] - rank + nprocs) % nprocs - rem2;
+
+//					if (rank == 0) {
+//						std::cout << "size " << x << " " << i << " " << j << " " << " " << rdispls[sent_blocks[i][j]]*typesize << " " << size << " " << offset << std::endl;
+//					}
 
 					if (j < distance) {
 						memcpy(&recvbuf[rdispls[sent_blocks[i][j]]*typesize], &temp_recv_buffer[offset], size);
@@ -191,6 +205,26 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 				}
 			}
 		}
+//
+//			if (rank == 0 && x == 1) {
+//
+//				int num = zoffset/typesize/1024;
+////				std::cout << "tenp " << num << std::endl;
+//
+//				for (int i = 0; i < num; i++) {
+//					for (int j = 0; j < 5; j++) {
+//						long long a;
+//						memcpy(&a, &temp_recv_buffer[(i*1024 + j)*typesize], typesize);
+//						std::cout << "temp " << i << " " << j << " " << a << std::endl;
+//					}
+//				}
+//
+////				for (int i = 0; i < )
+////				std::cout << "b " << x << " " << i << " " << zns[i] << std::endl;
+//			}
+//
+//
+//		}
 
 		distance *= r;
 		next_distance *= r;
