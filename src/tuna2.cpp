@@ -84,7 +84,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
         return 1; // Exit program with error
     }
 
-	for (int x = 0; x < w; x++) {
+	for (int x = 0; x < 1; x++) {
 		ze = (x == w - 1)? r - d: r;
 		int zoffset = 0, zc = ze-1;
 		int zns[zc];

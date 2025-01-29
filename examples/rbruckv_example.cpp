@@ -129,7 +129,6 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		if (rank == 0) {
-			int id = 0;
 			for (int i = 0; i < nprocs; i++) {
 				for (int j = 0; j < 5; j++) {
 					std::cout << "recv " << recv_buffer[i*16+j] << std::endl;
