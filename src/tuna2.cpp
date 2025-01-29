@@ -207,22 +207,22 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 			}
 		}
 //
-//			if (rank == 0 && x == 1) {
-//
-//				int num = zoffset/typesize/1024;
-////				std::cout << "tenp " << num << std::endl;
-//
-//				for (int i = 0; i < num; i++) {
-//					for (int j = 0; j < 5; j++) {
-//						long long a;
-//						memcpy(&a, &temp_recv_buffer[(i*1024 + j)*typesize], typesize);
-//						std::cout << "temp " << i << " " << j << " " << a << std::endl;
-//					}
-//				}
-//
-////				for (int i = 0; i < )
-////				std::cout << "b " << x << " " << i << " " << zns[i] << std::endl;
-//			}
+			if (rank == 0 && x == 1) {
+
+				int num = zoffset/typesize/16;
+//				std::cout << "tenp " << num << std::endl;
+
+				for (int i = 0; i < num; i++) {
+					for (int j = 0; j < 5; j++) {
+						long long a;
+						memcpy(&a, &temp_recv_buffer[(i*16 + j)*typesize], typesize);
+						std::cout << "temp " << i << " " << j << " " << a << std::endl;
+					}
+				}
+
+//				for (int i = 0; i < )
+//				std::cout << "b " << x << " " << i << " " << zns[i] << std::endl;
+			}
 //
 //
 //		}
