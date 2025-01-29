@@ -207,7 +207,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 			}
 		}
 //
-			if (rank == 0 && x == 1) {
+			if (rank == 0 && x == 0) {
 
 				int num = zoffset/typesize/16;
 //				std::cout << "tenp " << num << std::endl;
