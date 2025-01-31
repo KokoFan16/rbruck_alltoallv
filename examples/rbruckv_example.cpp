@@ -46,7 +46,7 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 	int mpi_errno = MPI_SUCCESS;
 	int basecount = bases.size();
-	for (int n = 16; n <= 16; n = n * 2) {
+	for (int n = 2; n <= 2048; n = n * 2) {
 
 		int sendcounts[nprocs]; // the size of data each process send to other process
 		memset(sendcounts, 0, nprocs*sizeof(int));
@@ -128,13 +128,13 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		if (rank == 0) {
-			for (int i = 0; i < nprocs; i++) {
-				for (int j = 0; j < 5; j++) {
-					std::cout << "recv " << recv_buffer[i*16+j] << std::endl;
-				}
-			}
-		}
+//		if (rank == 0) {
+//			for (int i = 0; i < nprocs; i++) {
+//				for (int j = 0; j < 5; j++) {
+//					std::cout << "recv " << recv_buffer[i*16+j] << std::endl;
+//				}
+//			}
+//		}
 
 //		// MPI_alltoallv
 //		for (int it = 0; it < loopcount; it++) {
