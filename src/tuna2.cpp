@@ -176,9 +176,9 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 						offset += size;
 					}
 
-					if (rank == 0) {
-						std::cout << "MPI_Irecv " << zoffset << " " << sendCount*typesize << " " << offset << std::endl;
-					}
+//					if (rank == 0) {
+//						std::cout << "MPI_Irecv " << zoffset << " " << sendCount*typesize << " " << offset << std::endl;
+//					}
 
 
 					MPI_Irecv(&temp_recv_buffer[zoffset], sendCount*typesize, MPI_CHAR, recvrank, 1, comm, &reqs[num_reqs++]);
@@ -208,9 +208,9 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 
 					if (j < distance) {
 
-						if (rank == 0) {
-							std::cout << "size " << x << " " << i << " " << j << " " << " " << rdispls[sent_blocks[i][j]]*typesize << " " << size << " " << offset << std::endl;
-						}
+//						if (rank == 0) {
+//							std::cout << "size " << x << " " << i << " " << j << " " << " " << rdispls[sent_blocks[i][j]]*typesize << " " << size << " " << offset << std::endl;
+//						}
 
 						memcpy(&recvbuf[rdispls[sent_blocks[i][j]]*typesize], &temp_recv_buffer[offset], size);
 					}
@@ -223,23 +223,23 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 			}
 		}
 //
-			if (rank == 0 && x == 0) {
-
-				int num = zoffset/typesize/16;
-//				std::cout << "tenp " << num << std::endl;
-
-				for (int i = 0; i < num; i++) {
-					for (int j = 0; j < 5; j++) {
-						long long a;
-						memcpy(&a, &temp_recv_buffer[(i*16 + j)*typesize], typesize);
-						std::cout << "temp " << i << " " << j << " " << a << std::endl;
-					}
-				}
-
-//				for (int i = 0; i < )
-//				std::cout << "b " << x << " " << i << " " << zns[i] << std::endl;
-			}
+//			if (rank == 0 && x == 0) {
 //
+//				int num = zoffset/typesize/16;
+////				std::cout << "tenp " << num << std::endl;
+//
+//				for (int i = 0; i < num; i++) {
+//					for (int j = 0; j < 5; j++) {
+//						long long a;
+//						memcpy(&a, &temp_recv_buffer[(i*16 + j)*typesize], typesize);
+//						std::cout << "temp " << i << " " << j << " " << a << std::endl;
+//					}
+//				}
+//
+////				for (int i = 0; i < )
+////				std::cout << "b " << x << " " << i << " " << zns[i] << std::endl;
+//			}
+////
 //
 //		}
 
