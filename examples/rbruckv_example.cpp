@@ -56,9 +56,9 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 		// Uniform random distribution
 		srand(time(NULL));
 		for (int i=0; i < nprocs; i++) {
-//			int random = rand() % 100;
-//			sendcounts[i] = (n * random) / 100;
-			sendcounts[i] = n;
+			int random = rand() % 100;
+			sendcounts[i] = (n * random) / 100;
+//			sendcounts[i] = n;
 		}
 
 		// Random shuffling the sendcounts array
@@ -128,13 +128,6 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 
-//		if (rank == 0) {
-//			for (int i = 0; i < nprocs; i++) {
-//				for (int j = 0; j < 5; j++) {
-//					std::cout << "recv " << recv_buffer[i*16+j] << std::endl;
-//				}
-//			}
-//		}
 
 //		// MPI_alltoallv
 //		for (int it = 0; it < loopcount; it++) {

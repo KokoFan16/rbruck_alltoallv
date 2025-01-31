@@ -155,9 +155,6 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 
 					for(int i = 0; i < di; i++) { sendCount += metadata_recv[z-1][i]; }
 
-					// prepare send buffer
-
-
 					// prepare send data
 					offset = 0;
 					for (int i = 0; i < di; i++) {
@@ -176,21 +173,11 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 						offset += size;
 					}
 
-//					if (rank == 0) {
-//						std::cout << "MPI_Irecv " << zoffset << " " << sendCount*typesize << " " << offset << std::endl;
-//					}
-
-
 					MPI_Irecv(&temp_recv_buffer[zoffset], sendCount*typesize, MPI_CHAR, recvrank, 1, comm, &reqs[num_reqs++]);
-
 					MPI_Isend(temp_send_buffer, offset, MPI_CHAR, sendrank, 1, comm, &reqs[num_reqs++]);
 
 					zoffset += sendCount*typesize;
-//
-//					if (rank == 0) {
-//						std::cout << "a " << x << " " << z << " " << zoffset << std::endl;
-//					}
-//
+
 				}
 //			}
 			MPI_Waitall(num_reqs, reqs, stats);
@@ -201,17 +188,11 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 		for (int i = 0; i < zc; i++) {
 			for (int j = 0; j < zns[i]; j++){
 
-//				std::cout << i << " " << j << " " << zns[i] << std::endl;
 				if (zns[i] > 1){
 					int size = metadata_recv[i][j]*typesize;
 					int o = (sent_blocks[i][j] - rank + nprocs) % nprocs - rem2;
 
 					if (j < distance) {
-
-//						if (rank == 0) {
-//							std::cout << "size " << x << " " << i << " " << j << " " << " " << rdispls[sent_blocks[i][j]]*typesize << " " << size << " " << offset << std::endl;
-//						}
-
 						memcpy(&recvbuf[rdispls[sent_blocks[i][j]]*typesize], &temp_recv_buffer[offset], size);
 					}
 					else {
@@ -222,26 +203,6 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 				}
 			}
 		}
-//
-//			if (rank == 0 && x == 0) {
-//
-//				int num = zoffset/typesize/16;
-////				std::cout << "tenp " << num << std::endl;
-//
-//				for (int i = 0; i < num; i++) {
-//					for (int j = 0; j < 5; j++) {
-//						long long a;
-//						memcpy(&a, &temp_recv_buffer[(i*16 + j)*typesize], typesize);
-//						std::cout << "temp " << i << " " << j << " " << a << std::endl;
-//					}
-//				}
-//
-////				for (int i = 0; i < )
-////				std::cout << "b " << x << " " << i << " " << zns[i] << std::endl;
-//			}
-////
-//
-//		}
 
 		distance *= r;
 		next_distance *= r;
