@@ -32,7 +32,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 
 	int rem1 = K + 1, rem2 = r + 1;
 	int sendNcopy[nprocs - rem1];
-	char *extra_buffer, *temp_recv_buffer;
+	char *extra_buffer, *temp_recv_buffer, *temp_send_buffer;
 	int extra_ids[nprocs - rem2];
 	memset(extra_ids, -1, sizeof(extra_ids));
 	int spoint = 1, distance = 1, next_distance = distance*r, di = 0;
@@ -54,6 +54,11 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 	        std::cerr << "extra_buffer or temp_recv_buffer allocation failed!" << std::endl;
 	        return 1; // Exit program with error
 	    }
+		temp_send_buffer = (char*) malloc(max_send_count * nlpow * typesize);
+	    if (temp_send_buffer == nullptr) {
+	        std::cerr << "temp_send_buffer allocation failed!" << std::endl;
+	        return 1; // Exit program with error
+	    }
 
 		for (int x = 0; x < w; x++) {
 			for (int z = 1; z < r; z ++) {
@@ -72,6 +77,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 	// copy data that need to be sent to each rank itself
 	memcpy(&recvbuf[rdispls[rank]*typesize], &sendbuf[sdispls[rank]*typesize], recvcounts[rank]*typesize);
 
+
 	int sent_blocks[r-1][nlpow];
 	int metadata_recv[r-1][nlpow];
 	int nc, rem, ns, ze, ss;
@@ -84,7 +90,14 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
         return 1; // Exit program with error
     }
 
-	for (int x = 0; x < 1; x++) {
+    MPI_Status* stats = (MPI_Status *) malloc(2 * r * sizeof(MPI_Status));
+    if (reqs == nullptr) {
+        std::cerr << "MPI_Status allocation failed!" << std::endl;
+        return 1; // Exit program with error
+    }
+
+
+	for (int x = 0; x < w; x++) {
 		ze = (x == w - 1)? r - d: r;
 		int zoffset = 0, zc = ze-1;
 		int zns[zc];
@@ -143,7 +156,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 					for(int i = 0; i < di; i++) { sendCount += metadata_recv[z-1][i]; }
 
 					// prepare send buffer
-					char* temp_send_buffer = (char*) malloc(offset);
+
 
 					// prepare send data
 					offset = 0;
@@ -178,10 +191,9 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 //						std::cout << "a " << x << " " << z << " " << zoffset << std::endl;
 //					}
 //
-					free(temp_send_buffer);
 				}
 //			}
-			MPI_Waitall(num_reqs, reqs, MPI_STATUSES_IGNORE);
+			MPI_Waitall(num_reqs, reqs, stats);
 		}
 
 		// replaces
@@ -237,6 +249,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 	if (K < nprocs - 1) {
 		free(extra_buffer);
 		free(temp_recv_buffer);
+		free(temp_send_buffer);
 	}
 	free(reqs);
 
