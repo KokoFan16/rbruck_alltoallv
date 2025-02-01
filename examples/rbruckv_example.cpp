@@ -95,8 +95,8 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 		for (int i = 0; i < basecount; i++) {
 			int eb = bases[i]+bases[i]/8;
-			int b = 2;
-//			for (int b = 1; b < eb; b+=nprocs/8) {
+//			int b = 2;
+			for (int b = 1; b < eb; b+=nprocs/8) {
 				for (int it=0; it < loopcount; it++) {
 					double st = MPI_Wtime();
 					mpi_errno = tuna2_algorithm(bases[i], b, (char*)send_buffer, sendcounts, sdispls,
@@ -125,7 +125,7 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 						}
 					}
 				}
-//			}
+			}
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 
