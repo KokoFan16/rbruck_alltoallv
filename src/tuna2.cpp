@@ -98,56 +98,11 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 
 	int metadata_send[nlpow];
 
-    // int comm_size[r];  comm_size[0] = 3, comm_size[2] = 3,
     int comm_size[r-1];
 	for (int x = 0; x < w; x++) {
 		ze = (x == w - 1)? r - d: r;
 		int zoffset = 0, zc = ze-1;
 		int zns[zc];
-
-		if (K < nprocs - 1) {
-			int mc = 0;
-			for (int z = 1; z < ze; z++) {
-
-				spoint = z * distance;
-
-				int dii = 0;
-				for (int i = spoint; i < nprocs; i += next_distance) {
-					int j_end = (i+distance > nprocs)? nprocs: i+distance;
-					for (int j = i; j < j_end; j++) {
-						int id = (j + rank) % nprocs;
-
-						int send_index = rotate_index_array[id];
-						int o = j % nprocs - rem2;
-
-						if (i % distance == 0) {
-//							if (rank == 0)
-//								std::cout << x << " " << z << " " << dii << " " << id << " " << send_index << std::endl;
-							metadata_send[dii] = sendcounts[send_index];
-						}
-						else {
-							metadata_send[dii] = sendNcopy[extra_ids[o]];
-						}
-						dii++;
-					}
-				}
-
-				int recvrank = (rank + spoint) % nprocs;
-				int sendrank = (rank - spoint + nprocs) % nprocs; // send data from rank + 2^k process
-
-				MPI_Sendrecv(metadata_send, dii, MPI_INT, sendrank, 0, metadata_recv[z-1], dii,
-						MPI_INT, recvrank, 0, comm, MPI_STATUS_IGNORE);
-
-				int sendCount = 0;
-				for(int i = 0; i < dii; i++) { sendCount += metadata_recv[z-1][i];}
-				comm_size[mc++] = sendCount;
-			}
-		}
-
-
-//		num_reqs = 0;
-//
-//		for (int z = 1; z < ze; z++) {
 
 		for (int k = 1; k < ze; k += b) {
 			ss = ze - k < b ? ze - k : b;
@@ -157,11 +112,6 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 
 				int z = k + s;
 
-//				if (rank == 0) {
-//					std::cout << "loop " << x << " " << ze << " " << k << " " << ss << " " << s
-//							<< " " << z  << " " << zoffset << " " << num_reqs << std::endl;
-//
-//				}
 
 				spoint = z * distance;
 				nc = nprocs / next_distance * distance, rem = nprocs % next_distance - spoint;
@@ -186,42 +136,33 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 						for (int j = i; j < j_end; j++) {
 							int id = (j + rank) % nprocs;
 							sent_blocks[z-1][di++] = id;
-
-//							if (rank == 1) {
-//								std::cout << "send " << x << " " << z << " " << recvrank << " " <<  sendrank <<<< id << std::endl;
-//							}
 						}
 					}
 
-//					// 2) prepare metadata
-//					int metadata_send[di];
-//					int sendCount = 0, offset = 0;
-//					for (int i = 0; i < di; i++) {
-//						int send_index = rotate_index_array[sent_blocks[z-1][i]];
-//						int o = (sent_blocks[z-1][i] - rank + nprocs) % nprocs - rem2;
-//
-////						if (rank == 0) {
-////							std::cout << "send " << x << " " << ze << " " << z << " " << recvrank << " " << sendrank << " " << send_index << " " << o << std::endl;
-////						}
-//
-//
-//						if (i % distance == 0) {
-//							metadata_send[i] = sendcounts[send_index];
-//						}
-//						else {
-//							metadata_send[i] = sendNcopy[extra_ids[o]];
-//						}
-//						offset += metadata_send[i] * typesize;
-//					}
-//
-//					MPI_Sendrecv(metadata_send, di, MPI_INT, sendrank, 0, metadata_recv[z-1], di,
-//							MPI_INT, recvrank, 0, comm, MPI_STATUS_IGNORE);
-//
-//					for(int i = 0; i < di; i++) { sendCount += metadata_recv[z-1][i]; }
+					// 2) prepare metadata
+					int metadata_send[di];
+					int sendCount = 0, offset = 0;
+					for (int i = 0; i < di; i++) {
+						int send_index = rotate_index_array[sent_blocks[z-1][i]];
+						int o = (sent_blocks[z-1][i] - rank + nprocs) % nprocs - rem2;
 
+						if (i % distance == 0) {
+							metadata_send[i] = sendcounts[send_index];
+						}
+						else {
+							metadata_send[i] = sendNcopy[extra_ids[o]];
+						}
+						offset += metadata_send[i] * typesize;
+					}
+
+					MPI_Sendrecv(metadata_send, di, MPI_INT, sendrank, 0, metadata_recv[z-1], di,
+							MPI_INT, recvrank, 0, comm, MPI_STATUS_IGNORE);
+
+					for(int i = 0; i < di; i++) { sendCount += metadata_recv[z-1][i]; }
+					comm_size[z-1] = sendCount; // total exchanged data per round
 
 					// prepare send data
-					int offset = 0;
+					offset = 0;
 					for (int i = 0; i < di; i++) {
 						int send_index = rotate_index_array[sent_blocks[z-1][i]];
 						int o = (sent_blocks[z-1][i] - rank + nprocs) % nprocs - rem2;
@@ -238,50 +179,23 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 						offset += size;
 					}
 
-//					if (rank == 1) {
-//						std::cout << "send " << x << " " << z << " " << offset << " " <<  comm_size[z-1]*typesize << std::endl;
-//					}
-//
 					MPI_Irecv(&temp_recv_buffer[zoffset], comm_size[z-1]*typesize, MPI_CHAR, recvrank, recvrank+z, comm, &reqs[num_reqs++]);
 					MPI_Isend(temp_send_buffer, offset, MPI_CHAR, sendrank, rank+z, comm, &reqs[num_reqs++]);
-//
-////					MPI_Sendrecv(temp_send_buffer, offset, MPI_CHAR, sendrank, 1, &temp_recv_buffer[zoffset],
-////							sendCount*typesize, MPI_CHAR, recvrank, 1, comm, MPI_STATUS_IGNORE);
-//
-//
+
 					zoffset += comm_size[z-1]*typesize;
-//
-//
-////					if (rank == 0) {
-////						std::cout << "request " << x << " " << z << " " << recvrank << " " <<  sendrank << " " << num_reqs << " " << zoffset << std::endl;
-////					}
-//
-//
-				}
-				MPI_Waitall(num_reqs, reqs, stats);
-				for (int i = 0; i < num_reqs; i++) {
-				    if (stats[i].MPI_ERROR != MPI_SUCCESS) {
-				        printf("Request %d encountered an error: %d\n", i, stats[i].MPI_ERROR);
-				    }
 				}
 
 			}
 
+			MPI_Waitall(num_reqs, reqs, stats);
+			for (int i = 0; i < num_reqs; i++) {
+			    if (stats[i].MPI_ERROR != MPI_SUCCESS) {
+			        printf("Request %d encountered an error: %d\n", i, stats[i].MPI_ERROR);
+			    }
+			}
+
 
 		}
-
-//		if (rank == 0 && x == 0) {
-//
-//			int num = zoffset/typesize/1024;
-//
-//			for (int i = 0; i < num; i++) {
-//				for (int j = 0; j < 5; j++) {
-//					long long a;
-//					memcpy(&a, &temp_recv_buffer[(i*1024 + j)*typesize], typesize);
-//					std::cout << "temp " << i << " " << j << " " << a << std::endl;
-//				}
-//			}
-//		}
 
 		if (K < nprocs - 1) {
 			// replaces
