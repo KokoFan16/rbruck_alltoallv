@@ -46,7 +46,7 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 	int mpi_errno = MPI_SUCCESS;
 	int basecount = bases.size();
-	for (int n = 2; n <= 2048; n = n * 2) {
+	for (int n = 1024; n <= 1024; n = n * 2) {
 
 		int sendcounts[nprocs]; // the size of data each process send to other process
 		memset(sendcounts, 0, nprocs*sizeof(int));
@@ -93,68 +93,68 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		for (int i = 0; i < basecount; i++) {
-			int eb = bases[i]+bases[i]/8;
-//			int b = 2;
-			for (int b = 1; b < eb; b+=nprocs/8) {
-				for (int it=0; it < loopcount; it++) {
-					double st = MPI_Wtime();
-					mpi_errno = tuna2_algorithm(bases[i], b, (char*)send_buffer, sendcounts, sdispls,
-							MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls,
-							MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-					double et = MPI_Wtime();
-					double total_time = et - st;
+//		for (int i = 0; i < basecount; i++) {
+//			int eb = bases[i]+bases[i]/8;
+////			int b = 2;
+//			for (int b = 1; b < eb; b+=nprocs/8) {
+//				for (int it=0; it < loopcount; it++) {
+//					double st = MPI_Wtime();
+//					mpi_errno = tuna2_algorithm(bases[i], b, (char*)send_buffer, sendcounts, sdispls,
+//							MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls,
+//							MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+//					double et = MPI_Wtime();
+//					double total_time = et - st;
+//
+//					if (mpi_errno != MPI_SUCCESS)
+//						std::cout << "twophase_rbruck_alltoallv fail!" <<std::endl;
+//
+//					// check correctness
+//					int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
+//
+//					if (error > 0) {
+//						std::cout << rank << " " << n << " " << b << " [Rbruckv] base " << bases[i] << " has errors" << std::endl;
+//					}
+//
+//					if (warmup == 0) {
+//						double max_time = 0;
+//						MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+//
+//
+//						if (total_time == max_time) {
+//							std::cout << "[Rbruckv] " << nprocs << ", " << n << ", " << b << ", " << bases[i] << ", " << max_time << std::endl;
+//						}
+//					}
+//				}
+//			}
+//		}
+//		MPI_Barrier(MPI_COMM_WORLD);
 
-					if (mpi_errno != MPI_SUCCESS)
-						std::cout << "twophase_rbruck_alltoallv fail!" <<std::endl;
-
-					// check correctness
-					int error = check_errors(recvcounts, recv_buffer, rank, nprocs);
-
-					if (error > 0) {
-						std::cout << rank << " " << n << " " << b << " [Rbruckv] base " << bases[i] << " has errors" << std::endl;
-					}
-
-					if (warmup == 0) {
-						double max_time = 0;
-						MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
 
-						if (total_time == max_time) {
-							std::cout << "[Rbruckv] " << nprocs << ", " << n << ", " << b << ", " << bases[i] << ", " << max_time << std::endl;
-						}
-					}
-				}
+
+		// MPI_alltoallv
+		for (int it = 0; it < loopcount; it++) {
+			double st = MPI_Wtime();
+			MPI_Alltoallv(send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+			double et = MPI_Wtime();
+			double total_time = et - st;
+
+			if (warmup == 0) {
+				double max_time = 0;
+				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+				if (total_time == max_time)
+					std::cout << "[MPIAlltoallv] " << nprocs << " " << n << " "<<  max_time << std::endl;
 			}
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 
-//		if (rank == 0) {
-//			for (int i = 0; i < nprocs; i++) {
-//				for (int j = 0; j < 5; j++) {
-//					std::cout << "recv " << recv_buffer[i*1024+j] << std::endl;
-//				}
-//			}
-//		}
-
-
-
-
-//		// MPI_alltoallv
-//		for (int it = 0; it < loopcount; it++) {
-//			double st = MPI_Wtime();
-//			MPI_Alltoallv(send_buffer, sendcounts, sdispls, MPI_UNSIGNED_LONG_LONG, recv_buffer, recvcounts, rdispls, MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
-//			double et = MPI_Wtime();
-//			double total_time = et - st;
-//
-//			if (warmup == 0) {
-//				double max_time = 0;
-//				MPI_Allreduce(&total_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-//				if (total_time == max_time)
-//					std::cout << "[MPIAlltoallv] " << nprocs << " " << n << " "<<  max_time << std::endl;
-//			}
-//		}
-//		MPI_Barrier(MPI_COMM_WORLD);
+		if (rank == 0) {
+			for (int i = 0; i < nprocs; i++) {
+				for (int j = 0; j < 5; j++) {
+					std::cout << "recv " << recv_buffer[i*1024+j] << std::endl;
+				}
+			}
+		}
 
 		delete[] send_buffer;
 		delete[] recv_buffer;

@@ -91,7 +91,7 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
     }
 
     MPI_Status* stats = (MPI_Status *) malloc(2 * r * sizeof(MPI_Status));
-    if (reqs == nullptr) {
+    if (stats == nullptr) {
         std::cerr << "MPI_Status allocation failed!" << std::endl;
         return 1; // Exit program with error
     }
@@ -108,10 +108,13 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 			ss = ze - k < b ? ze - k : b;
 			num_reqs = 0;
 
-			for (int s = 0; s < ss; s++) { // s = 0, s = 1
+			for (int s = 0; s < ss; s++) {
 
 				int z = k + s;
 
+//				if (rank == 0) {
+//					std::cout << k << " " << s << " " << z << std::endl;
+//				}
 
 				spoint = z * distance;
 				nc = nprocs / next_distance * distance, rem = nprocs % next_distance - spoint;
@@ -140,7 +143,6 @@ int tuna2_algorithm (int r, int b, char *sendbuf, int *sendcounts, int *sdispls,
 					}
 
 					// 2) prepare metadata
-					int metadata_send[di];
 					int sendCount = 0, offset = 0;
 					for (int i = 0; i < di; i++) {
 						int send_index = rotate_index_array[sent_blocks[z-1][i]];
