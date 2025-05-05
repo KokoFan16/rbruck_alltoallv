@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.10)
 
 file(GLOB_RECURSE CFILES "${PROJECT_SOURCE_DIR}/*.cpp")
 SET_SOURCE_FILES_PROPERTIES(${CFILES} PROPERTIES LANGUAGE CXX )

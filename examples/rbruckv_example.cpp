@@ -94,14 +94,18 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		for (int i = 0; i < basecount; i++) {
-//			int eb = bases[i]+bases[i]/8;
-			int b = 2;
-//			for (int b = 1; b < eb; b+=nprocs/8) {
+			int eb = bases[i]+bases[i]/8;
+			for (int b = 1; b < eb; b+=nprocs/8) {
 				for (int it=0; it < loopcount; it++) {
 					double st = MPI_Wtime();
-					mpi_errno = tuna2_algorithm(bases[i], b, (char*)send_buffer, sendcounts, sdispls,
+					mpi_errno = tuna_algorithm(bases[i], b, (char*)send_buffer, sendcounts, sdispls,
 							MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls,
 							MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+
+//					mpi_errno = twophase_rbruck_alltoallv(bases[i], (char*)send_buffer, sendcounts, sdispls,
+//								MPI_UNSIGNED_LONG_LONG, (char*)recv_buffer, recvcounts, rdispls,
+//								MPI_UNSIGNED_LONG_LONG, MPI_COMM_WORLD);
+
 					double et = MPI_Wtime();
 					double total_time = et - st;
 
@@ -125,7 +129,7 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 						}
 					}
 				}
-//			}
+			}
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 
@@ -147,11 +151,11 @@ static void run_rbruckv(int loopcount, int nprocs, std::vector<int> bases, int w
 //			}
 //		}
 //		MPI_Barrier(MPI_COMM_WORLD);
-
+//
 //		if (rank == 0) {
 //			for (int i = 0; i < nprocs; i++) {
 //				for (int j = 0; j < 5; j++) {
-//					std::cout << "recv " << recv_buffer[i*512+j] << std::endl;
+//					std::cout << "recv " << recv_buffer[i*1024+j] << std::endl;
 //				}
 //			}
 //		}
